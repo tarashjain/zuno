@@ -137,15 +137,15 @@ export default function Navbar() {
                 My Games
               </Link>
               <div className="flex items-center gap-2 bg-[var(--surface2)] border border-[var(--border)] rounded-xl px-3 py-1.5">
-                {session.user.image ? (
+                {session?.user?.image ? (
                   <img src={session.user.image} alt="" className="w-6 h-6 rounded-full" />
                 ) : (
                   <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center text-xs font-bold text-white">
-                    {session.user.name?.[0]?.toUpperCase() ?? session.user.email?.[0]?.toUpperCase()}
+                    {session?.user?.name?.[0]?.toUpperCase() ?? session?.user?.email?.[0]?.toUpperCase()}
                   </div>
                 )}
                 <span className="text-sm font-semibold max-w-[120px] truncate">
-                  {session.user.name ?? session.user.email}
+                  {session?.user?.name ?? session?.user?.email}
                 </span>
               </div>
               <button
@@ -248,16 +248,16 @@ export default function Navbar() {
           {session ? (
             <>
               <div className="flex items-center gap-3 px-3 py-3 bg-[var(--surface2)] rounded-xl mb-2">
-                {session.user.image ? (
+                {session?.user?.image ? (
                   <img src={session.user.image} alt="" className="w-9 h-9 rounded-full" />
                 ) : (
-                  <div className="w-9 h-9 rounded-full bg-[var(--accent)] flex items-center justify-center font-bold text-white">
-                    {session.user.name?.[0]?.toUpperCase() ?? '?'}
+                  <div className="w-9 h-9 rounded-full bg-[var(--accent)] flex items-center justify-center text-sm font-bold text-white">
+                    {session?.user?.name?.[0]?.toUpperCase() ?? '?'}
                   </div>
                 )}
-                <div className="overflow-hidden">
-                  <div className="font-bold text-sm truncate">{session.user.name}</div>
-                  <div className="text-xs text-[var(--muted)] truncate">{session.user.email}</div>
+                <div className="min-w-0 overflow-hidden">
+                  <div className="font-bold text-sm truncate">{session?.user?.name}</div>
+                  <div className="text-xs text-[var(--muted)] truncate">{session?.user?.email}</div>
                 </div>
               </div>
               <Link

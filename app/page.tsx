@@ -9,12 +9,12 @@ const CATEGORY_META: Record<string, { emoji: string; color: string; games: strin
   'Word & Party': { emoji: '🎉', color: '#22c55e', games: ['Imposter', 'Bollywood Codenames'] },
 }
 
-const SLUG_MAP: Record<string, string> = {
-  'Farkle': 'farkle',
-  'Judgement': 'judgement-card-game',
-  '100 Points': '100-points',
-  'Imposter': 'imposter',
-  'Bollywood Codenames': 'bollywood-code-names',
+const GAME_CATEGORY: Record<string, string> = {
+  farkle: 'Dice Games',
+  'judgement-card-game': 'Card Games',
+  '100-points': 'Card Games',
+  imposter: 'Word & Party',
+  'bollywood-code-names': 'Word & Party',
 }
 
 export default async function Home() {
@@ -23,7 +23,7 @@ export default async function Home() {
 
   const categories = Object.entries(CATEGORY_META).map(([cat, meta]) => ({
     cat, ...meta,
-    gameList: games.filter(g => g.category === cat),
+    gameList: games.filter(g => GAME_CATEGORY[g.slug] === cat),
   }))
 
   return (
@@ -99,7 +99,7 @@ export default async function Home() {
                   <div className="font-bold text-base mb-1 group-hover:text-[var(--accent)] transition-colors">
                     {game.name}
                   </div>
-                  <div className="text-xs text-[var(--muted)] font-medium">{game.category}</div>
+                  <div className="text-xs text-[var(--muted)] font-medium">{GAME_CATEGORY[game.slug]}</div>
                   <div
                     className="mt-4 text-xs font-bold flex items-center gap-1 transition-colors"
                     style={{ color }}
