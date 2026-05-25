@@ -57,15 +57,15 @@ export default function JudgementBoard({ session, players: initialPlayers }: { s
         🃏 Round {round}
       </div>
 
-      <div className="bg-white border-2 border-[var(--border)] rounded-xl overflow-hidden mb-5">
-        <table className="w-full">
+      <div className="bg-white border-2 border-[var(--border)] rounded-xl overflow-x-auto mb-5">
+        <table className="w-full min-w-[520px]">
           <thead>
             <tr className="bg-[var(--cream)] border-b-2 border-[var(--border)]">
-              <th className="p-3 text-left text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Player</th>
-              <th className="p-3 text-left text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Bid</th>
-              <th className="p-3 text-left text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Won</th>
-              <th className="p-3 text-left text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Points</th>
-              <th className="p-3 text-left text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Total</th>
+              <th className="p-2 sm:p-3 text-left text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Player</th>
+              <th className="p-2 sm:p-3 text-left text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Bid</th>
+              <th className="p-2 sm:p-3 text-left text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Won</th>
+              <th className="p-2 sm:p-3 text-left text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Points</th>
+              <th className="p-2 sm:p-3 text-left text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Total</th>
             </tr>
           </thead>
           <tbody>
@@ -77,8 +77,8 @@ export default function JudgementBoard({ session, players: initialPlayers }: { s
                 : null
               return (
                 <tr key={p.id} className={idx < players.length - 1 ? 'border-b border-[var(--border)]' : ''}>
-                  <td className="p-3 font-bold">{p.guestName}</td>
-                  <td className="p-3">
+                  <td className="p-2 sm:p-3 font-bold max-w-[150px] truncate">{p.guestName}</td>
+                  <td className="p-2 sm:p-3">
                     <input
                       type="number"
                       min="0"
@@ -87,7 +87,7 @@ export default function JudgementBoard({ session, players: initialPlayers }: { s
                       onChange={e => setBids(b => ({ ...b, [p.id]: e.target.value }))}
                     />
                   </td>
-                  <td className="p-3">
+                  <td className="p-2 sm:p-3">
                     <input
                       type="number"
                       min="0"
@@ -96,14 +96,14 @@ export default function JudgementBoard({ session, players: initialPlayers }: { s
                       onChange={e => setWon(w => ({ ...w, [p.id]: e.target.value }))}
                     />
                   </td>
-                  <td className="p-3">
+                  <td className="p-2 sm:p-3">
                     {preview !== null && (
                       <span className={`font-mono font-bold text-sm ${preview > 0 ? 'text-[#16a34a]' : 'text-[#dc2626]'}`}>
                         {preview > 0 ? `+${preview}` : '0'}
                       </span>
                     )}
                   </td>
-                  <td className="p-3 font-mono text-xl font-medium text-[var(--accent)]">{total(p)}</td>
+                  <td className="p-2 sm:p-3 font-mono text-lg sm:text-xl font-medium text-[var(--accent)]">{total(p)}</td>
                 </tr>
               )
             })}
