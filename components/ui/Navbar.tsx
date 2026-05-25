@@ -89,7 +89,7 @@ export default function Navbar() {
     <>
       <nav
         ref={navRef}
-        className="sticky top-0 z-40 h-16 bg-[var(--surface)]/90 backdrop-blur-md border-b border-[var(--border)] flex items-center px-4 md:px-6"
+        className="sticky top-0 z-40 h-16 bg-[var(--surface)] md:bg-[var(--surface)]/90 md:backdrop-blur-md border-b border-[var(--border)] flex items-center px-4 md:px-6"
       >
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 mr-6 flex-shrink-0" onClick={() => setOpenCat(null)}>
