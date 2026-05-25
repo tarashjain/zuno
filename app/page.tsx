@@ -1,71 +1,131 @@
-import { createGameSession } from './actions'
+import Link from 'next/link'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import prisma from '@/lib/db'
 
-const GAME_META: Record<string, { emoji: string; desc: string }> = {
-  'farkle':               { emoji: '🎲', desc: 'Classic dice banking game' },
-  'judgement-card-game':  { emoji: '🃏', desc: 'Bid and win tricks' },
-  '100-points':           { emoji: '💯', desc: 'Bid and win tricks variant' },
-  'imposter':             { emoji: '🕵️', desc: 'Find the imposter!' },
-  'bollywood-code-names': { emoji: '🎬', desc: 'Bollywood word spy game' },
+const CATEGORY_META: Record<string, { emoji: string; color: string; games: string[] }> = {
+  'Dice Games':   { emoji: '🎲', color: '#f97316', games: ['Farkle'] },
+  'Card Games':   { emoji: '🃏', color: '#3b82f6', games: ['Judgement', '100 Points'] },
+  'Word & Party': { emoji: '🎉', color: '#22c55e', games: ['Imposter', 'Bollywood Codenames'] },
+}
+
+const SLUG_MAP: Record<string, string> = {
+  'Farkle': 'farkle',
+  'Judgement': 'judgement-card-game',
+  '100 Points': '100-points',
+  'Imposter': 'imposter',
+  'Bollywood Codenames': 'bollywood-code-names',
 }
 
 export default async function Home() {
+  const session = await getServerSession(authOptions)
   const games = await prisma.game.findMany({ orderBy: { id: 'asc' } })
 
+  const categories = Object.entries(CATEGORY_META).map(([cat, meta]) => ({
+    cat, ...meta,
+    gameList: games.filter(g => g.category === cat),
+  }))
+
   return (
-    <main className="max-w-2xl mx-auto p-6 md:p-10">
-      {/* Brand */}
-      <div className="flex items-baseline gap-3 mb-2 pb-4 border-b-2 border-[var(--ink)]">
-        <h1 className="text-5xl font-extrabold tracking-tight leading-none">
+    <div className="max-w-5xl mx-auto px-4 py-10 md:py-16">
+      {/* Hero */}
+      <div className="mb-14 text-center">
+        <div className="inline-flex items-center gap-2 bg-[var(--surface2)] border border-[var(--border)] rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-6">
+          🎮 Party Game Hub
+        </div>
+        <h1 className="text-5xl md:text-7xl font-black tracking-tighter leading-none mb-4">
           ZU<span className="text-[var(--accent)]">N</span>O
         </h1>
-        <span className="text-xs font-semibold uppercase tracking-widest text-[var(--muted)]">
-          Party Game Hub
-        </span>
+        <p className="text-[var(--muted)] text-lg md:text-xl font-medium max-w-md mx-auto mb-8">
+          Score, track, and play your favourite party games — all in one place.
+        </p>
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
+          {session ? (
+            <>
+              <Link
+                href="/games/farkle"
+                className="w-full sm:w-auto px-8 py-3.5 bg-[var(--accent)] text-white font-bold rounded-2xl hover:brightness-110 transition-all text-base"
+              >
+                Start a Game →
+              </Link>
+              <Link
+                href="/history"
+                className="w-full sm:w-auto px-8 py-3.5 bg-[var(--surface2)] border border-[var(--border)] font-bold rounded-2xl hover:border-[var(--accent)] transition-all text-base text-center"
+              >
+                My History
+              </Link>
+            </>
+          ) : (
+            <>
+              <Link
+                href="/auth/register"
+                className="w-full sm:w-auto px-8 py-3.5 bg-[var(--accent)] text-white font-bold rounded-2xl hover:brightness-110 transition-all text-base text-center"
+              >
+                Create Account →
+              </Link>
+              <Link
+                href="/auth/signin"
+                className="w-full sm:w-auto px-8 py-3.5 bg-[var(--surface2)] border border-[var(--border)] font-bold rounded-2xl hover:border-[var(--accent)] transition-all text-base text-center"
+              >
+                Sign in
+              </Link>
+            </>
+          )}
+        </div>
       </div>
-      <p className="text-[var(--muted)] font-semibold text-sm mb-10">
-        Your universal party game scorekeeper. Pick a game to get started.
-      </p>
 
-      {/* Game picker */}
-      <div className="bg-white border-2 border-[var(--border)] rounded-2xl shadow-sm p-6">
-        <h2 className="text-xl font-extrabold mb-5">Host a New Game</h2>
-        <form action={createGameSession} className="flex flex-col gap-4">
-          <select
-            name="gameId"
-            required
-            defaultValue=""
-            className="p-3 border-2 border-[var(--border)] rounded-xl bg-[var(--paper)] font-semibold text-[var(--ink)] outline-none focus:border-[var(--accent)] transition-colors"
-          >
-            <option value="" disabled>Select a game…</option>
-            {games.map((game) => (
-              <option key={game.id} value={game.id}>
-                {GAME_META[game.slug]?.emoji} {game.name}
-              </option>
-            ))}
-          </select>
-          <button
-            type="submit"
-            className="bg-[var(--accent)] text-white py-3 px-5 rounded-xl font-bold text-base hover:brightness-110 active:scale-[0.99] transition-all shadow-[0_2px_0_#b83208]"
-          >
-            Create Room →
-          </button>
-        </form>
-      </div>
-
-      {/* Game cards */}
-      <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
-        {games.map((game) => {
-          const meta = GAME_META[game.slug]
-          return (
-            <div key={game.id} className="bg-white border-2 border-[var(--border)] rounded-xl p-4">
-              <div className="text-2xl mb-2">{meta?.emoji}</div>
-              <div className="font-extrabold">{game.name}</div>
-              <div className="text-xs text-[var(--muted)] font-semibold mt-1">{meta?.desc}</div>
+      {/* Game categories */}
+      <div className="space-y-8">
+        {categories.map(({ cat, emoji, color, gameList }) => (
+          <div key={cat}>
+            <div className="flex items-center gap-3 mb-4">
+              <span className="text-2xl">{emoji}</span>
+              <h2 className="text-xl font-black tracking-tight">{cat}</h2>
+              <div className="flex-1 h-px bg-[var(--border)]" />
             </div>
-          )
-        })}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {gameList.map((game) => (
+                <Link
+                  key={game.id}
+                  href={`/games/${game.slug}`}
+                  className="group bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 hover:border-[var(--accent)] hover:bg-[var(--surface2)] transition-all"
+                >
+                  <div
+                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3 font-bold"
+                    style={{ background: color + '22', color }}
+                  >
+                    {emoji}
+                  </div>
+                  <div className="font-bold text-base mb-1 group-hover:text-[var(--accent)] transition-colors">
+                    {game.name}
+                  </div>
+                  <div className="text-xs text-[var(--muted)] font-medium">{game.category}</div>
+                  <div
+                    className="mt-4 text-xs font-bold flex items-center gap-1 transition-colors"
+                    style={{ color }}
+                  >
+                    Play now <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </div>
+        ))}
       </div>
-    </main>
+
+      {/* Stats strip */}
+      <div className="mt-16 grid grid-cols-3 gap-4 border-t border-[var(--border)] pt-10">
+        {[
+          { label: 'Games', value: '5' },
+          { label: 'Categories', value: '3' },
+          { label: 'Free forever', value: '✓' },
+        ].map(({ label, value }) => (
+          <div key={label} className="text-center">
+            <div className="text-2xl md:text-3xl font-black text-[var(--accent)]">{value}</div>
+            <div className="text-xs text-[var(--muted)] font-semibold mt-1 uppercase tracking-wide">{label}</div>
+          </div>
+        ))}
+      </div>
+    </div>
   )
 }
