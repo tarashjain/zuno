@@ -18,18 +18,18 @@ export default async function GameRoom({ params }: { params: { id: string } }) {
   return (
     <main className="max-w-2xl mx-auto p-6 md:p-10">
       {/* Header */}
-      <div className="flex items-baseline gap-3 mb-6 pb-4 border-b-2 border-[var(--ink)]">
+      <div className="flex flex-wrap items-baseline gap-2 sm:gap-3 mb-6 pb-4 border-b-2 border-[var(--ink)]">
         <a href="/" className="text-3xl font-extrabold tracking-tight leading-none">
           ZU<span className="text-[var(--accent)]">N</span>O
         </a>
-        <span className="text-[var(--muted)] font-semibold text-sm">| {session.game.name}</span>
+        <span className="text-[var(--muted)] font-semibold text-sm break-words">| {session.game.name}</span>
       </div>
 
       {/* Room code */}
-      <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4 mb-6 flex items-center justify-between">
+      <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4 mb-6 flex items-center justify-between gap-4">
         <div>
           <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Room Code</p>
-          <p className="text-3xl font-extrabold tracking-widest mt-1">{roomCode}</p>
+          <p className="text-2xl sm:text-3xl font-extrabold tracking-widest mt-1 break-all">{roomCode}</p>
         </div>
         <span className="text-4xl">🎮</span>
       </div>

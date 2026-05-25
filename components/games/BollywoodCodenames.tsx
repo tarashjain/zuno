@@ -48,8 +48,8 @@ export default function BollywoodCodenames({ words }: { words: Word[] }) {
   return (
     <div>
       {/* Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 mb-5 bg-white border-2 border-[var(--border)] rounded-xl p-4">
-        <div className="flex gap-5">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-5 bg-white border-2 border-[var(--border)] rounded-xl p-4">
+        <div className="flex flex-wrap gap-3 sm:gap-5">
           <span className="font-extrabold text-red-500">🔴 {remaining.red} left</span>
           <span className="font-extrabold text-blue-500">🔵 {remaining.blue} left</span>
         </div>
@@ -65,7 +65,7 @@ export default function BollywoodCodenames({ words }: { words: Word[] }) {
       </div>
 
       {/* Grid */}
-      <div className="grid grid-cols-5 gap-2 mb-6">
+      <div className="grid grid-cols-5 gap-1.5 sm:gap-2 mb-6">
         {grid.map((card) => {
           const isRevealed = revealed.has(card.id)
           return (
@@ -73,8 +73,8 @@ export default function BollywoodCodenames({ words }: { words: Word[] }) {
               key={card.id}
               onClick={() => toggle(card.id)}
               className={`
-                aspect-[4/3] flex items-center justify-center p-1 rounded-xl
-                font-extrabold text-[10px] sm:text-xs uppercase tracking-wide
+                min-h-12 sm:min-h-16 flex items-center justify-center p-1 rounded-lg sm:rounded-xl
+                font-extrabold text-[9px] sm:text-xs uppercase tracking-wide break-words
                 border-2 transition-all leading-tight text-center
                 ${cardStyle(card.team, isRevealed)}
                 ${isRevealed && !isSpymaster ? 'opacity-30' : 'opacity-100'}
@@ -86,7 +86,7 @@ export default function BollywoodCodenames({ words }: { words: Word[] }) {
         })}
       </div>
 
-      <div className="grid grid-cols-2 gap-3 mb-4 text-xs font-bold">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-4 text-xs font-bold">
         <div className="flex items-center gap-2 bg-[var(--cream)] border-2 border-[var(--border)] rounded-lg p-2">
           <span className="w-3 h-3 rounded-sm bg-red-500 inline-block" /> Red Team (9 words)
         </div>

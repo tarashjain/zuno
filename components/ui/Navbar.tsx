@@ -89,7 +89,7 @@ export default function Navbar() {
     <>
       <nav
         ref={navRef}
-        className="sticky top-0 z-40 h-16 bg-[var(--surface)] md:bg-[var(--surface)]/90 md:backdrop-blur-md border-b border-[var(--border)] flex items-center px-4 md:px-6"
+        className="sticky top-0 z-40 h-16 bg-[var(--surface)] shadow-sm md:bg-[var(--surface)]/95 md:backdrop-blur-md border-b border-[var(--border)] flex items-center px-4 md:px-6"
       >
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 mr-6 flex-shrink-0" onClick={() => setOpenCat(null)}>
@@ -202,7 +202,7 @@ export default function Navbar() {
 
       {/* Mobile drawer */}
       <div
-        className={`fixed top-16 right-0 h-[calc(100vh-64px)] w-80 max-w-[90vw] bg-[var(--surface)] border-l border-[var(--border)] z-40 md:hidden transition-transform duration-300 ease-out overflow-y-auto
+        className={`fixed top-16 right-0 h-[calc(100vh-64px)] w-80 max-w-[90vw] bg-[var(--surface)] shadow-2xl border-l border-[var(--border)] z-40 md:hidden transition-transform duration-300 ease-out overflow-y-auto
           ${mobileOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="p-4 space-y-1">

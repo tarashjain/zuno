@@ -11,6 +11,10 @@
   --accent: #e8430a;
   --muted: #8a8070;
   --border: #d8d0be;
+  --text: var(--ink);
+  --surface: #ffffff;
+  --surface2: #f6f1e7;
+  --red: #dc2626;
 }
 
 * { box-sizing: border-box; }

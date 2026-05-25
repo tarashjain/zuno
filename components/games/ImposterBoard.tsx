@@ -41,11 +41,11 @@ export default function ImposterBoard({ players, words }: { players: Player[]; w
             {players.map((p) => (
               <div
                 key={p.id}
-                className="flex items-center justify-between bg-white border-2 border-[var(--border)] rounded-xl px-4 py-3"
+                className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-white border-2 border-[var(--border)] rounded-xl px-4 py-3"
               >
-                <span className="font-extrabold text-lg">{p.guestName}</span>
+                <span className="font-extrabold text-lg max-w-full break-words">{p.guestName}</span>
                 <button
-                  className={`font-bold text-sm rounded-lg px-4 py-2.5 select-none transition-all min-w-[150px] text-center
+                  className={`w-full sm:w-auto font-bold text-sm rounded-lg px-4 py-2.5 select-none transition-all sm:min-w-[150px] text-center break-words
                     ${holding[p.id]
                       ? 'bg-[var(--accent)] text-white'
                       : 'bg-[var(--ink)] text-[var(--paper)]'
