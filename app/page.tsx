@@ -20,6 +20,11 @@ const GAME_CATEGORY: Record<string, string> = {
 export default async function Home() {
   const session = await getServerSession(authOptions)
   const games = await prisma.game.findMany({ orderBy: { id: 'asc' } })
+  const pastSessions = session ? await prisma.gameSession.findMany({
+    take: 6,
+    orderBy: { createdAt: 'desc' },
+    include: { game: true, players: true },
+  }) : []
 
   const categories = Object.entries(CATEGORY_META).map(([cat, meta]) => ({
     cat, ...meta,
@@ -74,58 +79,102 @@ export default async function Home() {
         </div>
       </div>
 
-      {/* Game categories */}
-      <div className="space-y-8">
-        {categories.map(({ cat, emoji, color, gameList }) => (
-          <div key={cat}>
-            <div className="flex items-center gap-3 mb-4">
-              <span className="text-2xl">{emoji}</span>
-              <h2 className="text-xl font-black tracking-tight">{cat}</h2>
-              <div className="flex-1 h-px bg-[var(--border)]" />
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {gameList.map((game) => (
-                <Link
-                  key={game.id}
-                  href={`/games/${game.slug}`}
-                  className="group bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 hover:border-[var(--accent)] hover:bg-[var(--surface2)] transition-all"
-                >
-                  <div
-                    className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3 font-bold"
-                    style={{ background: color + '22', color }}
+      {/* Logged in: Past games */}
+      {session && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-2xl font-black mb-4">Your Past Games</h2>
+            {pastSessions.length > 0 ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {pastSessions.map((session) => (
+                  <Link
+                    key={session.id}
+                    href={`/room/${session.id}`}
+                    className="group bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 hover:border-[var(--accent)] hover:bg-[var(--surface2)] transition-all"
                   >
-                    {emoji}
-                  </div>
-                  <div className="font-bold text-base mb-1 group-hover:text-[var(--accent)] transition-colors">
-                    {game.name}
-                  </div>
-                  <div className="text-xs text-[var(--muted)] font-medium">{GAME_CATEGORY[game.slug]}</div>
-                  <div
-                    className="mt-4 text-xs font-bold flex items-center gap-1 transition-colors"
-                    style={{ color }}
-                  >
-                    Play now <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
-                  </div>
+                    <div className="text-2xl mb-3">🎮</div>
+                    <div className="font-bold text-base mb-1">{session.game.name}</div>
+                    <div className="text-xs text-[var(--muted)] font-medium mb-3">
+                      {session.players.length} player{session.players.length !== 1 ? 's' : ''}
+                    </div>
+                    <div className="text-xs text-[var(--muted)]">
+                      {new Date(session.createdAt).toLocaleDateString()}
+                    </div>
+                    <div className="mt-4 text-xs font-bold text-[var(--accent)] flex items-center gap-1">
+                      View stats <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 px-6 bg-[var(--surface)] border border-[var(--border)] rounded-2xl">
+                <div className="text-3xl mb-3">📊</div>
+                <p className="text-[var(--muted)] mb-4">No past games yet. Start playing!</p>
+                <Link href="/games/farkle" className="text-[var(--accent)] font-bold hover:underline">
+                  Play a game →
                 </Link>
-              ))}
-            </div>
+              </div>
+            )}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
 
-      {/* Stats strip */}
-      <div className="mt-16 grid grid-cols-3 gap-4 border-t border-[var(--border)] pt-10">
-        {[
-          { label: 'Games', value: '5' },
-          { label: 'Categories', value: '3' },
-          { label: 'Free forever', value: '✓' },
-        ].map(({ label, value }) => (
-          <div key={label} className="text-center">
-            <div className="text-2xl md:text-3xl font-black text-[var(--accent)]">{value}</div>
-            <div className="text-xs text-[var(--muted)] font-semibold mt-1 uppercase tracking-wide">{label}</div>
+      {/* Not logged in: Game categories */}
+      {!session && (
+        <>
+          <div className="space-y-8">
+            {categories.map(({ cat, emoji, color, gameList }) => (
+              <div key={cat}>
+                <div className="flex items-center gap-3 mb-4">
+                  <span className="text-2xl">{emoji}</span>
+                  <h2 className="text-xl font-black tracking-tight">{cat}</h2>
+                  <div className="flex-1 h-px bg-[var(--border)]" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {gameList.map((game) => (
+                    <Link
+                      key={game.id}
+                      href={`/games/${game.slug}`}
+                      className="group bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 hover:border-[var(--accent)] hover:bg-[var(--surface2)] transition-all"
+                    >
+                      <div
+                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3 font-bold"
+                        style={{ background: color + '22', color }}
+                      >
+                        {emoji}
+                      </div>
+                      <div className="font-bold text-base mb-1 group-hover:text-[var(--accent)] transition-colors">
+                        {game.name}
+                      </div>
+                      <div className="text-xs text-[var(--muted)] font-medium">{GAME_CATEGORY[game.slug]}</div>
+                      <div
+                        className="mt-4 text-xs font-bold flex items-center gap-1 transition-colors"
+                        style={{ color }}
+                      >
+                        Play now <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
+
+          {/* Stats strip */}
+          <div className="mt-16 grid grid-cols-3 gap-4 border-t border-[var(--border)] pt-10">
+            {[
+              { label: 'Games', value: '5' },
+              { label: 'Categories', value: '3' },
+              { label: 'Free forever', value: '✓' },
+            ].map(({ label, value }) => (
+              <div key={label} className="text-center">
+                <div className="text-2xl md:text-3xl font-black text-[var(--accent)]">{value}</div>
+                <div className="text-xs text-[var(--muted)] font-semibold mt-1 uppercase tracking-wide">{label}</div>
+              </div>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   )
 }
