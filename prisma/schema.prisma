@@ -1,0 +1,52 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DATABASE_URL")
+}
+
+model Game {
+  id       Int           @id @default(autoincrement())
+  name     String
+  slug     String        @unique
+  sessions GameSession[]
+  words    GameWord[]
+}
+
+model GameWord {
+  id       Int    @id @default(autoincrement())
+  gameId   Int
+  word     String
+  pairWord String?
+  game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+}
+
+model GameSession {
+  id        String          @id @default(uuid())
+  gameId    Int
+  status    String          @default("lobby")
+  createdAt DateTime        @default(now())
+  game      Game            @relation(fields: [gameId], references: [id])
+  players   SessionPlayer[]
+}
+
+model SessionPlayer {
+  id        Int         @id @default(autoincrement())
+  sessionId String
+  guestName String
+  joinedAt  DateTime    @default(now())
+  session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  scores    Score[]
+}
+
+model Score {
+  id       Int           @id @default(autoincrement())
+  playerId Int
+  round    Int           @default(1)
+  points   Int
+  notes    String?
+  player   SessionPlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
+}
