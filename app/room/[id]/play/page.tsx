@@ -2,6 +2,7 @@ import prisma from '@/lib/db'
 import { notFound } from 'next/navigation'
 import FarkleBoard from '@/components/games/FarkleBoard'
 import JudgementBoard from '@/components/games/JudgementBoard'
+import HundredPointsBoard from '@/components/games/HundredPointsBoard'
 import ImposterBoard from '@/components/games/ImposterBoard'
 import BollywoodCodenames from '@/components/games/BollywoodCodenames'
 
@@ -18,7 +19,7 @@ export default async function PlayGame({ params }: { params: { id: string } }) {
 
   const GameComponents: Record<string, React.ElementType> = {
     farkle: FarkleBoard,
-    '100-points': JudgementBoard,
+    '100-points': HundredPointsBoard,
     'judgement-card-game': JudgementBoard,
     imposter: ImposterBoard,
     'bollywood-code-names': BollywoodCodenames,
