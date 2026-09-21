@@ -79,6 +79,12 @@ export default async function Home() {
             </>
           )}
         </div>
+        <p className="mt-5 text-sm font-semibold text-[var(--muted)]">
+          Have a room code?{' '}
+          <Link href="/join" className="text-[var(--accent)] font-bold hover:underline">
+            Join a Room →
+          </Link>
+        </p>
       </div>
 
       {/* Logged in: Past games */}

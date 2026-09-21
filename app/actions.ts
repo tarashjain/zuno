@@ -11,12 +11,13 @@ export async function createGameSession(formData: FormData) {
 }
 
 export async function joinRoomByCode(formData: FormData) {
-  const code = ((formData.get('code') as string) || '').trim().toLowerCase()
+  const raw = (formData.get('code') as string) || ''
+  const code = raw.trim().toLowerCase().replace(/[^a-z0-9]/g, '')
 
   if (!code) redirect('/join?error=empty')
 
   const session = await prisma.gameSession.findFirst({
-    where: { id: { startsWith: code } },
+    where: { id: { startsWith: code, mode: 'insensitive' } },
     orderBy: { createdAt: 'desc' },
   })
 
