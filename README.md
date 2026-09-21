@@ -78,7 +78,7 @@ vercel
    - `DATABASE_URL` → your Neon connection string
 5. Click **Deploy**
 
-The `build` script (`prisma generate && prisma db push && prisma db seed && next build`) pushes the schema and re-seeds games + word lists automatically on every deploy — no manual step needed. Seeding is safe to re-run: games are upserted and word banks are cleared and recreated, so player/session/score data is never touched.
+The `build` script (`prisma generate && prisma db push --accept-data-loss && prisma db seed && next build`) pushes the schema and re-seeds games + word lists automatically on every deploy — no manual step needed. Seeding is safe to re-run: games are upserted and word banks are cleared and recreated, so player/session/score data is never touched. `--accept-data-loss` is needed because `db push` can't prompt for confirmation in a non-interactive CI build; it doesn't mean schema changes here are actually destructive — check any new migration for genuinely destructive changes (dropped/narrowed columns) before relying on this blindly.
 
 ---
 
