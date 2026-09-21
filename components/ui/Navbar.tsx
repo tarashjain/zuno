@@ -26,13 +26,7 @@ const CATEGORIES = [
     games: [
       { name: 'Imposter',            slug: 'imposter',             desc: 'Find the imposter' },
       { name: 'Bollywood Codenames', slug: 'bollywood-code-names', desc: 'Bollywood spy words' },
-    ],
-  },
-  {
-    label: 'Misc',
-    emoji: '🧩',
-    games: [
-      { name: '5 Second Rule', slug: '5-second-rule', desc: 'Name 3 before time runs out' },
+      { name: '5 Second Rule',       slug: '5-second-rule',        desc: 'Name 3 before time runs out' },
     ],
   },
 ]
