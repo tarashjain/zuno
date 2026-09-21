@@ -1,5 +1,5 @@
 import prisma from '@/lib/db'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import FarkleBoard from '@/components/games/FarkleBoard'
 import JudgementBoard from '@/components/games/JudgementBoard'
 import HundredPointsBoard from '@/components/games/HundredPointsBoard'
@@ -7,17 +7,27 @@ import ImposterBoard from '@/components/games/ImposterBoard'
 import BollywoodCodenames from '@/components/games/BollywoodCodenames'
 import FiveSecondRuleBoard from '@/components/games/FiveSecondRuleBoard'
 import ScorekeeperBoard from '@/components/games/ScorekeeperBoard'
+import { getRoomActor } from '@/lib/room-auth'
 
 export default async function PlayGame({ params }: { params: { id: string } }) {
+  const actor = await getRoomActor(params.id)
+  if (!actor.room) return notFound()
+  if (!actor.authorized) redirect(`/room/${params.id}`)
+
   const session = await prisma.gameSession.findUnique({
     where: { id: params.id },
     include: {
-      game: { include: { words: true } },
+      game: true,
       players: { include: { scores: true } },
     },
   })
 
   if (!session) return notFound()
+  if (session.status !== 'active') redirect(`/room/${params.id}`)
+
+  const words = session.game.slug === '5-second-rule'
+    ? await prisma.gameWord.findMany({ where: { gameId: session.gameId } })
+    : []
 
   const GameComponents: Record<string, React.ElementType> = {
     farkle: FarkleBoard,
@@ -53,7 +63,9 @@ export default async function PlayGame({ params }: { params: { id: string } }) {
         <ActiveGame
           session={session}
           players={session.players}
-          words={session.game.words}
+          words={words}
+          isHost={actor.isHost}
+          myPlayerId={actor.playerId}
         />
       ) : (
         <div className="text-center py-20 text-[var(--muted)] font-semibold">

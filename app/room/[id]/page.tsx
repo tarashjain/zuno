@@ -1,9 +1,7 @@
 import prisma from '@/lib/db'
 import { notFound, redirect } from 'next/navigation'
-import { cookies } from 'next/headers'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
 import LobbyLive from '@/components/room/LobbyLive'
+import { getRoomActor } from '@/lib/room-auth'
 
 export default async function GameRoom({ params }: { params: { id: string } }) {
   const session = await prisma.gameSession.findUnique({
@@ -13,17 +11,19 @@ export default async function GameRoom({ params }: { params: { id: string } }) {
 
   if (!session) return notFound()
 
-  // Auto-redirect if already started
-  if (session.status === 'active') redirect(`/room/${params.id}/play`)
+  const actor = await getRoomActor(params.id)
+
+  // Only verified room members may enter an active game.
+  if (session.status === 'active') {
+    if (actor.authorized) redirect(`/room/${params.id}/play`)
+    return notFound()
+  }
 
   const isLocal = session.mode === 'local'
   const roomCode = params.id.split('-')[0].toUpperCase()
 
-  const authSession = await getServerSession(authOptions)
-  const isHost = !!authSession?.user?.email && authSession.user.email === session.hostEmail
-
-  const myPlayerCookie = cookies().get(`zuno_player_${params.id}`)?.value
-  const myPlayerId = myPlayerCookie ? parseInt(myPlayerCookie) : null
+  const isHost = actor.isHost
+  const myPlayerId = actor.playerId
 
   return (
     <main className="max-w-2xl mx-auto p-6 md:p-10">

@@ -1,9 +1,15 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { getRoomActor } from '@/lib/room-auth'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
+  const actor = await getRoomActor(params.id)
+  if (!actor.authorized) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const session = await prisma.gameSession.findUnique({
     where: { id: params.id },
     include: { players: { include: { scores: true }, orderBy: { joinedAt: 'asc' } } },
