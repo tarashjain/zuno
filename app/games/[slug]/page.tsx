@@ -76,6 +76,19 @@ const GAME_INFO: Record<string, { name: string; emoji: string; description: stri
       'The Hot Seat passes to the next player each round — most points after the agreed rounds wins',
     ],
   },
+  wavelength: {
+    name: 'Wavelength',
+    emoji: '📡',
+    description: 'A social guessing game where teams try to read each other’s minds on a shifting spectrum.',
+    rules: [
+      'Split players into two teams. One player is the Psychic each round (the clue giver).',
+      'The Psychic chooses a spectrum from the card and secretly spins the dial to set a hidden target along that spectrum.',
+      'Give a single creative clue (one word or short concept) corresponding to where the target lies.',
+      'Teammates discuss and set the pointer where they think the target is; then the Psychic reveals the hidden target zone.',
+      'Scoring: Bullseye (center) = 4 points, Middle ring = 3 points, Outer ring = 2 points. The opposing team may guess Left/Right for +1 bonus point.',
+      'Alternate turns; first team to reach 10 points wins.',
+    ],
+  },
   'score-keeper': {
     name: 'Score Keeper',
     emoji: '📝',

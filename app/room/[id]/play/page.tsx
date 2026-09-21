@@ -7,6 +7,7 @@ import ImposterBoard from '@/components/games/ImposterBoard'
 import BollywoodCodenames from '@/components/games/BollywoodCodenames'
 import FiveSecondRuleBoard from '@/components/games/FiveSecondRuleBoard'
 import ScorekeeperBoard from '@/components/games/ScorekeeperBoard'
+import WavelengthBoard from '@/components/games/WavelengthBoard'
 import { getRoomActor } from '@/lib/room-auth'
 
 export default async function PlayGame({ params }: { params: { id: string } }) {
@@ -37,6 +38,7 @@ export default async function PlayGame({ params }: { params: { id: string } }) {
     'bollywood-code-names': BollywoodCodenames,
     '5-second-rule': FiveSecondRuleBoard,
     'score-keeper': ScorekeeperBoard,
+    'wavelength': WavelengthBoard,
   }
 
   const ActiveGame = GameComponents[session.game.slug]
