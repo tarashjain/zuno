@@ -12,7 +12,7 @@ export default async function History() {
   }
 
   const gameSessions = await prisma.gameSession.findMany({
-    where: { hostEmail: session.user.email },
+    where: { hostEmail: { equals: session.user.email, mode: 'insensitive' } },
     orderBy: { createdAt: 'desc' },
     include: {
       game: true,
