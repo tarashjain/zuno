@@ -91,7 +91,10 @@ export async function setWavelengthPointer(sessionId: string, pointer: number) {
 
 export async function revealWavelengthRound(sessionId: string, pointer: number, otherTeamGuess?: 'left' | 'right') {
   await requireRoomHost(sessionId)
-  const session = await prisma.gameSession.findUnique({ where: { id: sessionId }, include: { players: { include: { scores: true } } }, select: { id: true, boardState: true, secretState: true, players: true } })
+  const session = await prisma.gameSession.findUnique({
+    where: { id: sessionId },
+    select: { id: true, boardState: true, secretState: true, players: { include: { scores: true } } },
+  })
   const publicState = session?.boardState as WavelengthPublic | null
   const secretState = session?.secretState as WavelengthSecret | null
   if (!session || publicState?.kind !== 'wavelength' || secretState?.kind !== 'wavelength') throw new Error('No Wavelength round is active.')
