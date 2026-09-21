@@ -1,6 +1,7 @@
 'use client'
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { submitScore } from '@/app/actions/score'
+import { useLiveBoard } from '@/components/room/useLiveBoard'
 
 type Word = { id: number; word: string }
 type ScoreEntry = { points: number; round: number; notes?: string | null }
@@ -8,8 +9,23 @@ type Player = { id: number; guestName: string; scores: ScoreEntry[] }
 type Session = { id: string }
 
 type Phase = 'idle' | 'countdown' | 'result'
+type FiveSecondState = {
+  currentPlayerIndex: number
+  round: number
+  phase: Phase
+  phraseId: number | null
+  roundStartedAt: number | null // Date.now() ms when the countdown began — shared so every device's timer stays in sync
+}
 
 const ROUND_SECONDS = 5
+
+const DEFAULT_STATE: FiveSecondState = {
+  currentPlayerIndex: 0,
+  round: 1,
+  phase: 'idle',
+  phraseId: null,
+  roundStartedAt: null,
+}
 
 function scoreTotal(p: Player) {
   return p.scores.reduce((s, x) => s + x.points, 0)
@@ -24,40 +40,38 @@ export default function FiveSecondRuleBoard({
   players: Player[]
   words: Word[]
 }) {
-  const [players, setPlayers] = useState(initialPlayers)
-  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0)
-  const [round, setRound] = useState(1)
-  const [phase, setPhase] = useState<Phase>('idle')
-  const [phrase, setPhrase] = useState<Word | null>(null)
-  const [timeLeft, setTimeLeft] = useState(ROUND_SECONDS)
+  const { boardState, setBoardState, players, setPlayers } = useLiveBoard<FiveSecondState, Player>(
+    session.id,
+    DEFAULT_STATE,
+    initialPlayers
+  )
   const [saving, setSaving] = useState(false)
-  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const [now, setNow] = useState(() => Date.now())
 
-  const currentPlayer = players[currentPlayerIndex]
+  const currentPlayer = players[boardState.currentPlayerIndex] ?? players[0]
+  const phrase = boardState.phraseId !== null ? words.find(w => w.id === boardState.phraseId) ?? null : null
 
+  // Tick locally while a round is counting down so every device's clock stays smooth,
+  // but the countdown's origin (roundStartedAt) is shared, so everyone sees the same time left.
   useEffect(() => {
-    return () => {
-      if (intervalRef.current) clearInterval(intervalRef.current)
-    }
-  }, [])
+    if (boardState.phase !== 'countdown') return
+    const interval = setInterval(() => setNow(Date.now()), 50)
+    return () => clearInterval(interval)
+  }, [boardState.phase])
+
+  const elapsed = boardState.roundStartedAt ? (now - boardState.roundStartedAt) / 1000 : 0
+  const timeLeft = Math.max(0, ROUND_SECONDS - elapsed)
+  const effectivePhase: Phase = boardState.phase === 'countdown' && elapsed >= ROUND_SECONDS ? 'result' : boardState.phase
 
   const startRound = () => {
     if (words.length === 0 || !currentPlayer) return
     const next = words[Math.floor(Math.random() * words.length)]
-    setPhrase(next)
-    setTimeLeft(ROUND_SECONDS)
-    setPhase('countdown')
-
-    const startedAt = Date.now()
-    intervalRef.current = setInterval(() => {
-      const elapsed = (Date.now() - startedAt) / 1000
-      const remaining = Math.max(0, ROUND_SECONDS - elapsed)
-      setTimeLeft(remaining)
-      if (remaining <= 0) {
-        if (intervalRef.current) clearInterval(intervalRef.current)
-        setPhase('result')
-      }
-    }, 50)
+    setBoardState({
+      ...boardState,
+      phase: 'countdown',
+      phraseId: next.id,
+      roundStartedAt: Date.now(),
+    })
   }
 
   const scoreRound = async (madeIt: boolean) => {
@@ -66,16 +80,19 @@ export default function FiveSecondRuleBoard({
     const points = madeIt ? 1 : 0
     const notes = `"${phrase.word}" — ${madeIt ? 'named 3 in time' : 'ran out of time'}`
 
-    await submitScore(session.id, currentPlayer.id, points, round, notes)
+    await submitScore(session.id, currentPlayer.id, points, boardState.round, notes)
 
-    setPlayers(pl =>
-      pl.map(p => (p.id === currentPlayer.id ? { ...p, scores: [...p.scores, { points, round, notes }] } : p))
+    setPlayers(
+      players.map(p => (p.id === currentPlayer.id ? { ...p, scores: [...p.scores, { points, round: boardState.round, notes }] } : p))
     )
+    setBoardState({
+      currentPlayerIndex: (boardState.currentPlayerIndex + 1) % players.length,
+      round: boardState.round + 1,
+      phase: 'idle',
+      phraseId: null,
+      roundStartedAt: null,
+    })
     setSaving(false)
-    setPhase('idle')
-    setPhrase(null)
-    setRound(r => r + 1)
-    setCurrentPlayerIndex(i => (i + 1) % players.length)
   }
 
   if (players.length === 0) {
@@ -111,7 +128,7 @@ export default function FiveSecondRuleBoard({
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-white border-2 border-[var(--border)] rounded-xl px-4 py-3 text-center">
           <div className="text-xs font-bold text-[var(--muted)] uppercase tracking-wide mb-1">Round</div>
-          <div className="text-3xl font-mono text-[var(--accent)]">{round}</div>
+          <div className="text-3xl font-mono text-[var(--accent)]">{boardState.round}</div>
         </div>
         <div className="bg-white border-2 border-[var(--border)] rounded-xl px-4 py-3 text-center">
           <div className="text-xs font-bold text-[var(--muted)] uppercase tracking-wide mb-1">Hot Seat</div>
@@ -119,7 +136,7 @@ export default function FiveSecondRuleBoard({
         </div>
       </div>
 
-      {phase === 'idle' && (
+      {effectivePhase === 'idle' && (
         <button
           onClick={startRound}
           disabled={saving}
@@ -129,7 +146,7 @@ export default function FiveSecondRuleBoard({
         </button>
       )}
 
-      {phase === 'countdown' && phrase && (
+      {effectivePhase === 'countdown' && phrase && (
         <div className="bg-[var(--ink)] text-[var(--paper)] rounded-2xl p-6 mb-6 text-center">
           <p className="text-xs font-bold uppercase tracking-widest opacity-60 mb-3">Name 3…</p>
           <p className="text-2xl font-extrabold mb-6">{phrase.word}</p>
@@ -143,7 +160,7 @@ export default function FiveSecondRuleBoard({
         </div>
       )}
 
-      {phase === 'result' && phrase && (
+      {effectivePhase === 'result' && phrase && (
         <div className="mb-6">
           <div className="bg-white border-2 border-[var(--border)] rounded-xl p-5 mb-4 text-center">
             <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-2">Time&rsquo;s up!</p>

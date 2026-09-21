@@ -1,26 +1,42 @@
 'use client'
 import { useState } from 'react'
+import { useLiveBoard } from '@/components/room/useLiveBoard'
 
 type Word = { id: number; word: string; pairWord: string | null }
 type Player = { id: number; guestName: string }
+type Session = { id: string }
 
-export default function ImposterBoard({ players, words }: { players: Player[]; words: Word[] }) {
-  const [pair, setPair] = useState<Word | null>(null)
-  const [imposterId, setImposterId] = useState<number | null>(null)
+type ImposterState = { pairId: number; imposterId: number; revealed: boolean } | null
+
+export default function ImposterBoard({
+  session,
+  players,
+  words,
+}: {
+  session: Session
+  players: Player[]
+  words: Word[]
+}) {
+  const { boardState, setBoardState } = useLiveBoard<ImposterState, Player>(session.id, null, players)
   const [holding, setHolding] = useState<Record<number, boolean>>({})
-  const [revealed, setRevealed] = useState(false)
+
+  const pair = boardState ? words.find(w => w.id === boardState.pairId) ?? null : null
+  const imposterId = boardState?.imposterId ?? null
+  const revealed = boardState?.revealed ?? false
 
   const newRound = () => {
     const validWords = words.filter(w => w.pairWord)
+    if (validWords.length === 0 || players.length === 0) return
     const p = validWords[Math.floor(Math.random() * validWords.length)]
     const imp = players[Math.floor(Math.random() * players.length)]
-    setPair(p)
-    setImposterId(imp.id)
+    setBoardState({ pairId: p.id, imposterId: imp.id, revealed: false })
     setHolding({})
-    setRevealed(false)
   }
 
-  const revealImposter = () => setRevealed(true)
+  const revealImposter = () => {
+    if (!boardState) return
+    setBoardState({ ...boardState, revealed: true })
+  }
 
   return (
     <div className="max-w-md mx-auto">

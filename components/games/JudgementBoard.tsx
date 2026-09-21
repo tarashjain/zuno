@@ -1,13 +1,13 @@
 'use client'
 import { useState } from 'react'
 import { submitScore } from '@/app/actions/score'
+import { useLiveBoard } from '@/components/room/useLiveBoard'
 
 type Player = { id: number; guestName: string; scores: { points: number; round: number; notes?: string | null }[] }
 type Session = { id: string }
 
 export default function JudgementBoard({ session, players: initialPlayers }: { session: Session; players: Player[] }) {
-  const [players, setPlayers] = useState(initialPlayers)
-  const [round, setRound] = useState(1)
+  const { players, setPlayers } = useLiveBoard<null, Player>(session.id, null, initialPlayers)
   const [bids, setBids] = useState<Record<number, string>>({})
   const [won, setWon] = useState<Record<number, string>>({})
   const [toast, setToast] = useState<string | null>(null)
@@ -15,6 +15,7 @@ export default function JudgementBoard({ session, players: initialPlayers }: { s
 
   const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500) }
   const total = (p: Player) => p.scores.reduce((s, x) => s + x.points, 0)
+  const round = players.length > 0 ? Math.max(0, ...players.flatMap(p => p.scores.map(s => s.round))) + 1 : 1
 
   const completeRound = async () => {
     setSaving(true)
@@ -29,11 +30,10 @@ export default function JudgementBoard({ session, players: initialPlayers }: { s
       await submitScore(session.id, u.id, u.pts, round, `Bid: ${u.bid}, Won: ${u.w}`)
     }
 
-    setPlayers(pl => pl.map(p => {
+    setPlayers(players.map(p => {
       const u = updates.find(x => x.id === p.id)!
       return { ...p, scores: [...p.scores, { points: u.pts, round, notes: `Bid: ${u.bid}, Won: ${u.w}` }] }
     }))
-    setRound(r => r + 1)
     setBids({})
     setWon({})
     setSaving(false)

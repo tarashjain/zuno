@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { submitScore } from '@/app/actions/score'
+import { useLiveBoard } from '@/components/room/useLiveBoard'
 
 type ScoreEntry = { points: number; round: number; notes?: string | null }
 type Player = { id: number; guestName: string; scores: ScoreEntry[] }
@@ -17,11 +18,12 @@ export default function ScorekeeperBoard({
   session: Session
   players: Player[]
 }) {
-  const [players, setPlayers] = useState(initialPlayers)
-  const [round, setRound] = useState(1)
+  const { players, setPlayers } = useLiveBoard<null, Player>(session.id, null, initialPlayers)
   const [entries, setEntries] = useState<Record<number, string>>({})
   const [saving, setSaving] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+
+  const round = players.length > 0 ? Math.max(0, ...players.flatMap(p => p.scores.map(s => s.round))) + 1 : 1
 
   const showToast = (msg: string) => {
     setToast(msg)
@@ -38,13 +40,12 @@ export default function ScorekeeperBoard({
       await submitScore(session.id, u.id, u.points, round)
     }
 
-    setPlayers(pl =>
-      pl.map(p => {
+    setPlayers(
+      players.map(p => {
         const u = updates.find(x => x.id === p.id)!
         return { ...p, scores: [...p.scores, { points: u.points, round }] }
       })
     )
-    setRound(r => r + 1)
     setEntries({})
     setSaving(false)
     showToast(`Round ${round} complete! ✅`)

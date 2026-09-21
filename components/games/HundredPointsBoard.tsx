@@ -1,12 +1,18 @@
 'use client'
 import { useMemo, useState } from 'react'
 import { submitScore } from '@/app/actions/score'
+import { useLiveBoard } from '@/components/room/useLiveBoard'
 
 type ScoreEntry = { points: number; round: number; notes?: string | null }
 type Player = { id: number; guestName: string; scores: ScoreEntry[] }
 type Session = { id: string }
 
 type CardOption = { label: string; value: number }
+type HundredPointsState = {
+  runningTotal: number
+  turn: number
+  currentPlayerIndex: number
+}
 
 const CARD_OPTIONS: CardOption[] = [
   { label: 'A', value: 1 },
@@ -25,6 +31,7 @@ const CARD_OPTIONS: CardOption[] = [
 ]
 
 const STARTING_TOKENS = 3
+const DEFAULT_STATE: HundredPointsState = { runningTotal: 0, turn: 1, currentPlayerIndex: 0 }
 
 function scoreTotal(p: Player) {
   return p.scores.reduce((s, x) => s + x.points, 0)
@@ -35,13 +42,16 @@ function tokensLeft(p: Player) {
 }
 
 export default function HundredPointsBoard({ session, players: initialPlayers }: { session: Session; players: Player[] }) {
-  const [players, setPlayers] = useState(initialPlayers)
-  const [runningTotal, setRunningTotal] = useState(0)
-  const [turn, setTurn] = useState(1)
-  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0)
+  const { boardState, setBoardState, players, setPlayers } = useLiveBoard<HundredPointsState, Player>(
+    session.id,
+    DEFAULT_STATE,
+    initialPlayers
+  )
   const [selectedCard, setSelectedCard] = useState('')
   const [toast, setToast] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+
+  const { runningTotal, turn, currentPlayerIndex } = boardState
 
   const activePlayers = useMemo(() => players.filter(p => tokensLeft(p) > 0), [players])
   const winner = activePlayers.length === 1 ? activePlayers[0] : null
@@ -78,14 +88,17 @@ export default function HundredPointsBoard({ session, players: initialPlayers }:
     const notes = `Played ${card.label} (${card.value >= 0 ? '+' : ''}${card.value}); total ${runningTotal} → ${previewTotal}`
     await submitScore(session.id, currentPlayer.id, 0, turn, notes)
 
-    setPlayers(pl => pl.map(p => p.id === currentPlayer.id
+    const updatedPlayers = players.map(p => p.id === currentPlayer.id
       ? { ...p, scores: [...p.scores, { points: 0, round: turn, notes }] }
       : p
-    ))
-    setRunningTotal(previewTotal)
+    )
+    setPlayers(updatedPlayers)
     setSelectedCard('')
-    setTurn(t => t + 1)
-    setCurrentPlayerIndex(i => moveToNextActivePlayer(i))
+    setBoardState({
+      runningTotal: previewTotal,
+      turn: turn + 1,
+      currentPlayerIndex: moveToNextActivePlayer(currentPlayerIndex, updatedPlayers),
+    })
     setSaving(false)
     showToast(`${currentPlayer.guestName} played ${card.label}. Total is ${previewTotal}.`)
   }
@@ -108,14 +121,17 @@ export default function HundredPointsBoard({ session, players: initialPlayers }:
 
     setPlayers(updatedPlayers)
     setSelectedCard('')
-    setTurn(t => t + 1)
-    setCurrentPlayerIndex(i => moveToNextActivePlayer(i, updatedPlayers))
+    setBoardState({
+      ...boardState,
+      turn: turn + 1,
+      currentPlayerIndex: moveToNextActivePlayer(currentPlayerIndex, updatedPlayers),
+    })
     setSaving(false)
     showToast(`${currentPlayer.guestName} busted and lost a token.`)
   }
 
   const resetPile = () => {
-    setRunningTotal(0)
+    setBoardState({ ...boardState, runningTotal: 0 })
     setSelectedCard('')
     showToast('Pile reset to 0.')
   }

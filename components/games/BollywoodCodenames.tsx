@@ -1,34 +1,44 @@
 'use client'
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
+import { useLiveBoard } from '@/components/room/useLiveBoard'
 
 type Word = { id: number; word: string }
+type Session = { id: string }
+type Team = 'red' | 'blue' | 'neutral' | 'assassin'
+type Card = { id: number; word: string; team: Team }
+type BollywoodState = { grid: Card[]; revealed: number[] } | null
 
 const shuffle = <T,>(arr: T[]): T[] => [...arr].sort(() => Math.random() - 0.5)
 
-type Team = 'red' | 'blue' | 'neutral' | 'assassin'
+function buildGrid(words: Word[]): Card[] {
+  const shuffledWords = shuffle(words).slice(0, 25)
+  const teams: Team[] = shuffle([
+    ...Array(9).fill('red' as Team),
+    ...Array(8).fill('blue' as Team),
+    ...Array(7).fill('neutral' as Team),
+    'assassin' as Team,
+  ])
+  return shuffledWords.map((w, i) => ({ ...w, team: teams[i] }))
+}
 
-export default function BollywoodCodenames({ words }: { words: Word[] }) {
+export default function BollywoodCodenames({ session, words }: { session: Session; words: Word[] }) {
+  const { boardState, setBoardState } = useLiveBoard<BollywoodState, { id: number }>(session.id, null, [])
   const [isSpymaster, setIsSpymaster] = useState(false)
-  const [revealed, setRevealed] = useState<Set<number>>(new Set())
-  const [gameKey, setGameKey] = useState(0)
 
-  const grid = useMemo(() => {
-    const shuffledWords = shuffle(words).slice(0, 25)
-    const teams: Team[] = shuffle([
-      ...Array(9).fill('red' as Team),
-      ...Array(8).fill('blue' as Team),
-      ...Array(7).fill('neutral' as Team),
-      'assassin' as Team,
-    ])
-    return shuffledWords.map((w, i) => ({ ...w, team: teams[i] }))
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [gameKey])
+  const grid = boardState?.grid ?? []
+  const revealed = new Set(boardState?.revealed ?? [])
 
   const toggle = (id: number) => {
-    setRevealed(r => { const n = new Set(r); n.has(id) ? n.delete(id) : n.add(id); return n })
+    if (!boardState) return
+    const next = new Set(boardState.revealed)
+    next.has(id) ? next.delete(id) : next.add(id)
+    setBoardState({ ...boardState, revealed: Array.from(next) })
   }
 
-  const newGame = () => { setGameKey(k => k + 1); setRevealed(new Set()); setIsSpymaster(false) }
+  const newGame = () => {
+    setBoardState({ grid: buildGrid(words), revealed: [] })
+    setIsSpymaster(false)
+  }
 
   const remaining = {
     red: grid.filter(c => c.team === 'red' && !revealed.has(c.id)).length,
@@ -43,6 +53,22 @@ export default function BollywoodCodenames({ words }: { words: Word[] }) {
       return 'bg-amber-100 text-amber-900 border-amber-300'
     }
     return 'bg-white text-[var(--ink)] border-[var(--border)] hover:border-[var(--accent)]'
+  }
+
+  if (!boardState) {
+    return (
+      <div className="text-center py-16 bg-white border-2 border-[var(--border)] rounded-xl">
+        <div className="text-4xl mb-3">🎬</div>
+        <p className="font-bold text-[var(--muted)] mb-5">No game running yet — deal the board to start.</p>
+        <button
+          onClick={newGame}
+          disabled={words.length === 0}
+          className="px-6 py-3 bg-[#7c3aed] text-white rounded-xl font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_2px_0_#5b21b6]"
+        >
+          🎬 Start Game
+        </button>
+      </div>
+    )
   }
 
   return (
