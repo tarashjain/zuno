@@ -7,7 +7,6 @@ const GAME_NAMES: Record<string, string> = {
   '100-points': '100 Points',
   imposter: 'Imposter',
   'bollywood-code-names': 'Bollywood Codenames',
-  '5-second-rule': '5 Second Rule',
 }
 
 export default async function NewRoom({

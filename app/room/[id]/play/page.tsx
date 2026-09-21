@@ -5,7 +5,6 @@ import JudgementBoard from '@/components/games/JudgementBoard'
 import HundredPointsBoard from '@/components/games/HundredPointsBoard'
 import ImposterBoard from '@/components/games/ImposterBoard'
 import BollywoodCodenames from '@/components/games/BollywoodCodenames'
-import FiveSecondRuleBoard from '@/components/games/FiveSecondRuleBoard'
 
 export default async function PlayGame({ params }: { params: { id: string } }) {
   const session = await prisma.gameSession.findUnique({
@@ -24,7 +23,6 @@ export default async function PlayGame({ params }: { params: { id: string } }) {
     'judgement-card-game': JudgementBoard,
     imposter: ImposterBoard,
     'bollywood-code-names': BollywoodCodenames,
-    '5-second-rule': FiveSecondRuleBoard,
   }
 
   const ActiveGame = GameComponents[session.game.slug]
