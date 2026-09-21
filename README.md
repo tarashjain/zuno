@@ -49,6 +49,8 @@ npm run db:push      # creates tables in Neon
 npm run db:seed      # seeds games + word lists
 ```
 
+(These also run automatically as part of `npm run build`, so this step is mainly useful for local development before `npm run dev`.)
+
 ### 5. Run Locally
 
 ```bash
@@ -76,7 +78,7 @@ vercel
    - `DATABASE_URL` → your Neon connection string
 5. Click **Deploy**
 
-> ⚠️ After deploying, run the seed once from your local machine pointing at the same `DATABASE_URL`. The schema push happens automatically via the `build` script (`prisma generate && next build`).
+The `build` script (`prisma generate && prisma db push && prisma db seed && next build`) pushes the schema and re-seeds games + word lists automatically on every deploy — no manual step needed. Seeding is safe to re-run: games are upserted and word banks are cleared and recreated, so player/session/score data is never touched.
 
 ---
 
