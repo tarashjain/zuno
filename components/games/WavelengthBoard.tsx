@@ -11,6 +11,7 @@ export default function WavelengthBoard({ session, players: initialPlayers, isHo
   const { boardState, replaceBoardState, players } = useLiveBoard<PublicState, Player>(session.id, null, initialPlayers)
   const [secret, setSecret] = useState<{ target: number; band: number } | null>(null)
   const [pointer, setPointer] = useState<number>(50)
+  const [showPointer, setShowPointer] = useState<boolean>(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -51,6 +52,20 @@ export default function WavelengthBoard({ session, players: initialPlayers, isHo
       replaceBoardState(next as any)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Could not assign teams')
+    }
+  }
+
+  const toggleTeam = async (playerId: number) => {
+    if (!isHost || !boardState) return
+    try {
+      const current = boardState.teams ?? {}
+      const key = String(playerId)
+      const nextTeams: Record<string, 'A' | 'B'> = { ...(current as Record<string, 'A' | 'B'>) }
+      nextTeams[key] = nextTeams[key] === 'A' ? 'B' : 'A'
+      const next = await assignWavelengthTeams(session.id, nextTeams)
+      replaceBoardState(next as any)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not update teams')
     }
   }
 
@@ -100,13 +115,65 @@ export default function WavelengthBoard({ session, players: initialPlayers, isHo
           </div>
 
           <div className="bg-white border-2 border-[var(--border)] rounded-xl p-4 mb-4">
-            <input type="range" min={0} max={100} value={boardState.pointer ?? pointer} onChange={(e) => changePointer(Number(e.target.value))} className="w-full" />
-            <div className="flex justify-between text-xs text-[var(--muted)] mt-2">
-              <span>Left</span>
-              <span>Center</span>
-              <span>Right</span>
-            </div>
-            <div className="text-sm font-bold mt-3">Pointer: {pointer}</div>
+            {!showPointer && boardState?.pointer == null ? (
+              <div className="flex gap-3 items-center">
+                <button
+                  onClick={() => {
+                    const r = Math.floor(Math.random() * 101)
+                    setPointer(r)
+                    changePointer(r)
+                    setShowPointer(true)
+                  }}
+                  className="px-3 py-2 bg-[var(--accent)] text-white rounded-lg font-bold"
+                >
+                  🎲 Random
+                </button>
+                <button
+                  onClick={() => setShowPointer(true)}
+                  className="px-3 py-2 bg-[var(--surface2)] rounded-lg font-bold border border-[var(--border)]"
+                >
+                  👁️ Unhide Pointer
+                </button>
+                <div className="text-sm text-[var(--muted)]">Pointer is hidden — unhide or randomize to start guessing.</div>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center">
+                <div className="w-full max-w-md">
+                  <div className="relative w-full h-36">
+                    <svg viewBox="0 0 200 100" className="w-full h-full">
+                      <defs>
+                        <linearGradient id="g1" x1="0%" x2="100%">
+                          <stop offset="0%" stopColor="#ef4444" />
+                          <stop offset="50%" stopColor="#f59e0b" />
+                          <stop offset="100%" stopColor="#10b981" />
+                        </linearGradient>
+                      </defs>
+                      <path d="M10 90 A80 80 0 0 1 190 90" stroke="#e5e7eb" strokeWidth="16" fill="none" strokeLinecap="round" />
+                      <path d="M10 90 A80 80 0 0 1 190 90" stroke="url(#g1)" strokeWidth="12" fill="none" strokeLinecap="round" strokeDasharray="251" strokeDashoffset="0" opacity="0.9" />
+                      {/* Needle */}
+                      <g transform={`translate(100,90) rotate(${(boardState?.pointer ?? pointer) * 1.8 - 90})`}>
+                        <line x1="0" y1="0" x2="0" y2="-70" stroke="#111827" strokeWidth="3" strokeLinecap="round" />
+                        <circle cx="0" cy="0" r="4" fill="#111827" />
+                      </g>
+                    </svg>
+                  </div>
+                  <div className="mt-3">
+                    <input type="range" min={0} max={100} value={boardState?.pointer ?? pointer} onChange={(e) => changePointer(Number(e.target.value))} className="w-full" />
+                    <div className="flex justify-between text-xs text-[var(--muted)] mt-2">
+                      <span>Left</span>
+                      <span>Center</span>
+                      <span>Right</span>
+                    </div>
+                    <div className="text-sm font-bold mt-3">Pointer: {boardState?.pointer ?? pointer}</div>
+                    {boardState?.pointer != null && (
+                      <div className="mt-2">
+                        <button onClick={() => { setShowPointer(false); }} className="text-xs text-[var(--muted)]">Hide Pointer</button>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="space-y-3 mb-6">
@@ -120,10 +187,15 @@ export default function WavelengthBoard({ session, players: initialPlayers, isHo
                 </div>
                 <div className="grid grid-cols-2 gap-2">
                   {players.map(p => (
-                    <div key={p.id} className="flex items-center justify-between px-3 py-2 border rounded-lg">
+                    <button
+                      key={p.id}
+                      onClick={() => toggleTeam(p.id)}
+                      disabled={!isHost}
+                      className={`flex items-center justify-between px-3 py-2 border rounded-lg text-left ${isHost ? 'hover:bg-[var(--surface2)]' : ''}`}
+                    >
                       <div>{p.guestName}</div>
                       <div className="text-sm font-bold">{boardState?.teams?.[String(p.id)] ?? '—'}</div>
-                    </div>
+                    </button>
                   ))}
                 </div>
               </div>
