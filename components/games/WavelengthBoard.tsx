@@ -5,7 +5,7 @@ import { startWavelengthRound, getWavelengthSecret, revealWavelengthRound, assig
 
 type Player = { id: number; guestName: string; scores: { points: number; round: number }[] }
 type Session = { id: string; mode: string }
-type PublicState = { kind: 'wavelength'; spectrum: string; psychicId: number; revealed: boolean; pointer?: number | null } | null
+type PublicState = ({ kind: 'wavelength'; spectrum: string; psychicId: number; revealed: boolean; pointer?: number | null; teams?: Record<string, 'A' | 'B'> }) | null
 
 export default function WavelengthBoard({ session, players: initialPlayers, isHost, myPlayerId }: { session: Session; players: Player[]; isHost: boolean; myPlayerId: number | null }) {
   const { boardState, replaceBoardState, players } = useLiveBoard<PublicState, Player>(session.id, null, initialPlayers)
