@@ -6,8 +6,7 @@ import prisma from '@/lib/db'
 const CATEGORY_META: Record<string, { emoji: string; color: string; games: string[] }> = {
   'Dice Games':   { emoji: '🎲', color: '#f97316', games: ['Farkle'] },
   'Card Games':   { emoji: '🃏', color: '#3b82f6', games: ['Judgement', '100 Points'] },
-  'Word & Party': { emoji: '🎉', color: '#22c55e', games: ['Imposter', 'Bollywood Codenames'] },
-  'Misc':         { emoji: '🧩', color: '#a855f7', games: ['5 Second Rule'] },
+  'Word & Party': { emoji: '🎉', color: '#22c55e', games: ['Imposter', 'Bollywood Codenames', '5 Second Rule'] },
 }
 
 const GAME_CATEGORY: Record<string, string> = {
@@ -16,7 +15,7 @@ const GAME_CATEGORY: Record<string, string> = {
   '100-points': 'Card Games',
   imposter: 'Word & Party',
   'bollywood-code-names': 'Word & Party',
-  '5-second-rule': 'Misc',
+  '5-second-rule': 'Word & Party',
 }
 
 export default async function Home() {
@@ -166,7 +165,7 @@ export default async function Home() {
           <div className="mt-16 grid grid-cols-3 gap-4 border-t border-[var(--border)] pt-10">
             {[
               { label: 'Games', value: '6' },
-              { label: 'Categories', value: '4' },
+              { label: 'Categories', value: '3' },
               { label: 'Free forever', value: '✓' },
             ].map(({ label, value }) => (
               <div key={label} className="text-center">
