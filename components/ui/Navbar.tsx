@@ -27,7 +27,6 @@ const CATEGORIES = [
       { name: 'Imposter',            slug: 'imposter',             desc: 'Find the imposter' },
       { name: 'Bollywood Codenames', slug: 'bollywood-code-names', desc: 'Bollywood spy words' },
       { name: '5 Second Rule',       slug: '5-second-rule',        desc: 'Name 3 before time runs out' },
-      { name: 'Score Keeper',        slug: 'score-keeper',         desc: 'General round-by-round scorecard' },
       { name: 'Wavelength',          slug: 'wavelength',           desc: 'Mind-reading on a shifting spectrum' },
     ],
   },
@@ -127,6 +126,15 @@ export default function Navbar() {
               )}
             </div>
           ))}
+          <div className="ml-3">
+            <Link
+              href="/games/score-keeper"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface2)] transition-colors"
+            >
+              <span>📝</span>
+              <span>Score Keeper</span>
+            </Link>
+          </div>
         </div>
 
         {/* Desktop right side */}
@@ -256,6 +264,15 @@ export default function Navbar() {
               )}
             </div>
           ))}
+
+          <div className="mt-2">
+            <Link
+              href="/games/score-keeper"
+              className="flex items-center gap-2 px-3 py-3 rounded-xl hover:bg-[var(--surface2)] font-semibold transition-colors"
+            >
+              📝 Score Keeper
+            </Link>
+          </div>
 
           <div className="border-t border-[var(--border)] my-3" />
 
