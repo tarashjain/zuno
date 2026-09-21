@@ -22,8 +22,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: 'An account with this email already exists.' }, { status: 409 })
   }
 
-  const passwordHash = await hash(password, 12)
-  await prisma.user.create({ data: { email, passwordHash } })
-
-  return NextResponse.json({ ok: true }, { status: 201 })
+  try {
+    const passwordHash = await hash(password, 12)
+    await prisma.user.create({ data: { email, passwordHash } })
+    return NextResponse.json({ ok: true }, { status: 201 })
+  } catch (err) {
+    // Log the error server-side and return a safe client message
+    // eslint-disable-next-line no-console
+    console.error('Registration error:', err)
+    return NextResponse.json({ error: 'Could not create account. Try again later.' }, { status: 500 })
+  }
 }
