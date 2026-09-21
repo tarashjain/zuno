@@ -104,6 +104,10 @@ export default function FiveSecondRuleBoard({
         Pass the device to the player in the Hot Seat, hit Start, and name 3 things in the category before the timer runs out.
       </div>
 
+      <div className="inline-flex items-center gap-1.5 bg-white border-2 border-[var(--border)] rounded-full px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-4">
+        🎯 Category: General
+      </div>
+
       <div className="grid grid-cols-2 gap-3 mb-6">
         <div className="bg-white border-2 border-[var(--border)] rounded-xl px-4 py-3 text-center">
           <div className="text-xs font-bold text-[var(--muted)] uppercase tracking-wide mb-1">Round</div>

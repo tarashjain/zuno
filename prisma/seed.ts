@@ -19,7 +19,10 @@ const IMPOSTER_PAIRS = [
   ["Sofa", "Armchair"], ["Clock", "Watch"], ["Bridge", "Tunnel"], ["Mountain", "Hill"],
 ]
 
-const FIVE_SECOND_RULE_CARDS = [
+// "General" category deck — mix of the official rulebook's own example ("Name 3 famous
+// Michaels") plus prompts drawn from published card examples (BoardGameGeek, official
+// rules summaries, and fan-compiled "Name 3" lists).
+const FIVE_SECOND_RULE_GENERAL_CARDS = [
   "Name 3 breakfast foods", "Name 3 Disney movies", "Name 3 things you'd find in a kitchen",
   "Name 3 famous Michaels", "Name 3 types of pasta", "Name 3 superheroes",
   "Name 3 countries in Europe", "Name 3 ice cream flavors", "Name 3 things that are red",
@@ -30,6 +33,13 @@ const FIVE_SECOND_RULE_CARDS = [
   "Name 3 things that are sticky", "Name 3 vegetables", "Name 3 things in a school bag",
   "Name 3 things in a fridge", "Name 3 Marvel movies", "Name 3 things that fly",
   "Name 3 things at a wedding", "Name 3 shows on Netflix", "Name 3 musical instruments",
+  "Name 3 U.S. Presidents", "Name 3 things you can paint", "Name 3 yellow foods",
+  "Name 3 famous Johns", "Name 3 of the Great Lakes", "Name 3 countries that start with the letter C",
+  "Name 3 Harry Potter characters", "Name 3 months of the year", "Name 3 pizza toppings",
+  "Name 3 reptiles", "Name 3 things under the bed", "Name 3 things you put on toast",
+  "Name 3 animals people keep as pets", "Name 3 things you wear", "Name 3 things in the sky",
+  "Name 3 sounds animals make", "Name 3 types of vehicles", "Name 3 things to do on the weekend",
+  "Name 3 movies about animals", "Name 3 movies with sequels", "Name 3 animated movies",
 ]
 
 async function main() {
@@ -84,7 +94,7 @@ async function main() {
   })
 
   await prisma.gameWord.createMany({
-    data: FIVE_SECOND_RULE_CARDS.map(word => ({ gameId: fiveSecondRuleGame.id, word })),
+    data: FIVE_SECOND_RULE_GENERAL_CARDS.map(word => ({ gameId: fiveSecondRuleGame.id, word })),
   })
 
   console.log('✅ Seed complete!')
