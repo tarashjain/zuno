@@ -9,6 +9,13 @@ datasource db {
   directUrl = env("DATABASE_URL")
 }
 
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
 model Game {
   id       Int           @id @default(autoincrement())
   name     String
@@ -32,6 +39,7 @@ model GameSession {
   mode       String          @default("individual") // "local" (pass-and-play, host adds everyone) or "individual" (each player joins via room code)
   hostEmail  String?         // signed-in email of whoever created the room; only this identity may start the game
   boardState Json?           // shared live game state (current turn, dice, grid, etc.) so every joined player sees the same game
+  secretState Json?          // server-only state for hidden roles and answers; never returned by shared board APIs
   createdAt  DateTime        @default(now())
   game       Game            @relation(fields: [gameId], references: [id])
   players    SessionPlayer[]

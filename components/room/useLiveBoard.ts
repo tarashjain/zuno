@@ -37,5 +37,5 @@ export function useLiveBoard<TState, TPlayer extends { id: number }>(
     persistBoardState(sessionId, next)
   }
 
-  return { boardState, setBoardState, players, setPlayers }
+  return { boardState, setBoardState, replaceBoardState: setBoardStateRaw, players, setPlayers }
 }

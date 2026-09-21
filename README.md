@@ -40,7 +40,11 @@ Edit `.env` and paste your Neon connection string:
 
 ```env
 DATABASE_URL="postgresql://user:password@ep-xxxx.us-east-1.aws.neon.tech/neondb?sslmode=require"
+NEXTAUTH_SECRET="generate-a-long-random-value"
+NEXTAUTH_URL="http://localhost:3000"
 ```
+
+Generate `NEXTAUTH_SECRET` with `openssl rand -base64 32` (or another cryptographically secure generator).
 
 ### 4. Push Schema & Seed
 
@@ -48,8 +52,6 @@ DATABASE_URL="postgresql://user:password@ep-xxxx.us-east-1.aws.neon.tech/neondb?
 npm run db:push      # creates tables in Neon
 npm run db:seed      # seeds games + word lists
 ```
-
-(These also run automatically as part of `npm run build`, so this step is mainly useful for local development before `npm run dev`.)
 
 ### 5. Run Locally
 
@@ -76,9 +78,12 @@ vercel
 3. Import your repo
 4. Under **Environment Variables**, add:
    - `DATABASE_URL` → your Neon connection string
-5. Click **Deploy**
+   - `NEXTAUTH_SECRET` → a long random secret
+   - `NEXTAUTH_URL` → your production URL
+5. Before the first deployment, run `npm run db:release` against the production database.
+6. Click **Deploy**
 
-The `build` script (`prisma generate && prisma db push --accept-data-loss && prisma db seed && next build`) pushes the schema and re-seeds games + word lists automatically on every deploy — no manual step needed. Seeding is safe to re-run: games are upserted and word banks are cleared and recreated, so player/session/score data is never touched. `--accept-data-loss` is needed because `db push` can't prompt for confirmation in a non-interactive CI build; it doesn't mean schema changes here are actually destructive — check any new migration for genuinely destructive changes (dropped/narrowed columns) before relying on this blindly.
+The production build only generates Prisma Client and builds Next.js. It does not modify the database. Run `npm run db:release` as an explicit release step after reviewing schema changes; unlike the old build command, it does not accept destructive data loss automatically.
 
 ---
 

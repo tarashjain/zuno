@@ -18,7 +18,18 @@ export default function Register() {
     setLoading(true)
 
     try {
-      // For now, just sign in with credentials (no actual registration backend)
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const registration = await response.json()
+
+      if (!response.ok) {
+        setError(registration.error ?? 'Failed to create account')
+        return
+      }
+
       const result = await signIn('credentials', {
         email,
         password,
@@ -69,6 +80,7 @@ export default function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              minLength={8}
               className="w-full px-4 py-2.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:border-[var(--accent)] transition-colors"
               required
             />

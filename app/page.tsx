@@ -22,11 +22,6 @@ const GAME_CATEGORY: Record<string, string> = {
 export default async function Home() {
   const session = await getServerSession(authOptions)
   const games = await prisma.game.findMany({ orderBy: { id: 'asc' } })
-  const pastSessions = session ? await prisma.gameSession.findMany({
-    take: 6,
-    orderBy: { createdAt: 'desc' },
-    include: { game: true, players: true },
-  }) : []
 
   const categories = Object.entries(CATEGORY_META).map(([cat, meta]) => ({
     cat, ...meta,
@@ -87,48 +82,8 @@ export default async function Home() {
         </p>
       </div>
 
-      {/* Logged in: Past games */}
-      {session && (
-        <div className="space-y-6">
-          <div>
-            <h2 className="text-2xl font-black mb-4">Your Past Games</h2>
-            {pastSessions.length > 0 ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {pastSessions.map((session) => (
-                  <Link
-                    key={session.id}
-                    href={`/room/${session.id}`}
-                    className="group bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 hover:border-[var(--accent)] hover:bg-[var(--surface2)] transition-all"
-                  >
-                    <div className="text-2xl mb-3">🎮</div>
-                    <div className="font-bold text-base mb-1">{session.game.name}</div>
-                    <div className="text-xs text-[var(--muted)] font-medium mb-3">
-                      {session.players.length} player{session.players.length !== 1 ? 's' : ''}
-                    </div>
-                    <div className="text-xs text-[var(--muted)]">
-                      {new Date(session.createdAt).toLocaleDateString()}
-                    </div>
-                    <div className="mt-4 text-xs font-bold text-[var(--accent)] flex items-center gap-1">
-                      View stats <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            ) : (
-              <div className="text-center py-12 px-6 bg-[var(--surface)] border border-[var(--border)] rounded-2xl">
-                <div className="text-3xl mb-3">📊</div>
-                <p className="text-[var(--muted)] mb-4">No past games yet. Start playing!</p>
-                <Link href="/games/farkle" className="text-[var(--accent)] font-bold hover:underline">
-                  Play a game →
-                </Link>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* Not logged in: Game categories */}
-      {!session && (
+      {/* Game categories */}
+      {(
         <>
           <div className="space-y-8">
             {categories.map(({ cat, emoji, color, gameList }) => (

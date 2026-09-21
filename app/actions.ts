@@ -1,11 +1,18 @@
 'use server'
 import prisma from '@/lib/db'
 import { redirect } from 'next/navigation'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 export async function createGameSession(formData: FormData) {
+  const authSession = await getServerSession(authOptions)
+  if (!authSession?.user?.email) redirect('/auth/signin')
+
   const gameId = parseInt(formData.get('gameId') as string)
+  if (!Number.isInteger(gameId)) redirect('/')
+
   const session = await prisma.gameSession.create({
-    data: { gameId, status: 'lobby' },
+    data: { gameId, status: 'lobby', hostEmail: authSession.user.email },
   })
   redirect(`/room/${session.id}`)
 }
