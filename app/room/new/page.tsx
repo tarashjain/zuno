@@ -1,5 +1,7 @@
 import prisma from '@/lib/db'
 import { redirect } from 'next/navigation'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 
 const GAME_NAMES: Record<string, string> = {
   farkle: 'Farkle',
@@ -23,6 +25,11 @@ export default async function NewRoom({
     redirect('/')
   }
 
+  const authSession = await getServerSession(authOptions)
+  if (!authSession?.user?.email) {
+    redirect(`/auth/signin?callbackUrl=${encodeURIComponent(`/room/new?game=${gameSlug}&mode=${mode}`)}`)
+  }
+
   const game = await prisma.game.upsert({
     where: { slug: gameSlug },
     update: {},
@@ -37,6 +44,7 @@ export default async function NewRoom({
       gameId: game.id,
       status: 'lobby',
       mode,
+      hostEmail: authSession.user.email,
     },
   })
 
