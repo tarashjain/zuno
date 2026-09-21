@@ -130,6 +130,12 @@ export default function Navbar() {
 
         {/* Desktop right side */}
         <div className="hidden md:flex items-center gap-3 ml-auto">
+          <Link
+            href="/join"
+            className="flex items-center gap-1.5 text-sm font-bold bg-[var(--surface2)] border border-[var(--border)] px-3 py-2 rounded-xl hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+          >
+            🔑 Join Room
+          </Link>
           {session ? (
             <>
               <Link
@@ -175,8 +181,14 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile right: auth shortcut + hamburger */}
+        {/* Mobile right: join shortcut + auth shortcut + hamburger */}
         <div className="flex md:hidden items-center gap-2 ml-auto">
+          <Link
+            href="/join"
+            className="text-sm font-bold text-[var(--accent)]"
+          >
+            🔑 Join
+          </Link>
           {!session && (
             <Link href="/auth/signin" className="text-sm font-bold text-[var(--accent)]">
               Sign in

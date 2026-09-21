@@ -9,3 +9,18 @@ export async function createGameSession(formData: FormData) {
   })
   redirect(`/room/${session.id}`)
 }
+
+export async function joinRoomByCode(formData: FormData) {
+  const code = ((formData.get('code') as string) || '').trim().toLowerCase()
+
+  if (!code) redirect('/join?error=empty')
+
+  const session = await prisma.gameSession.findFirst({
+    where: { id: { startsWith: code } },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  if (!session) redirect(`/join?error=notfound&code=${encodeURIComponent(code)}`)
+
+  redirect(`/room/${session.id}`)
+}
