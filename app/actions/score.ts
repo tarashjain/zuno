@@ -31,15 +31,7 @@ export async function joinSession(
   })
   if (existing) return { ok: false, reason: `"${name}" is already in this game — pick a different name.` }
 
-  let player
-  try {
-    player = await prisma.sessionPlayer.create({ data: { sessionId, guestName: name } })
-  } catch (err: any) {
-    if (err?.code === 'P2002') {
-      return { ok: false, reason: `"${name}" is already in this game — pick a different name.` }
-    }
-    throw err
-  }
+  const player = await prisma.sessionPlayer.create({ data: { sessionId, guestName: name } })
 
   cookies().set(playerCookieName(sessionId), String(player.id), {
     path: `/room/${sessionId}`,

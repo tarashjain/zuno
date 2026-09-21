@@ -45,8 +45,6 @@ model SessionPlayer {
   joinedAt  DateTime    @default(now())
   session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   scores    Score[]
-
-  @@unique([sessionId, guestName])
 }
 
 model Score {
