@@ -9,6 +9,7 @@ A Next.js 14 party game scorekeeper with Neon (PostgreSQL) database, deployable 
 - 💯 **100 Points** — Bid & win tricks variant
 - 🕵️ **Imposter** — Find the imposter word game
 - 🎬 **Bollywood Codenames** — Bollywood-themed word spy game
+- ⏱️ **5 Second Rule** — Name 3 things in a category before the 5-second timer runs out
 
 ---
 
@@ -93,7 +94,8 @@ zuno/
 │   ├── FarkleBoard.tsx
 │   ├── JudgementBoard.tsx
 │   ├── ImposterBoard.tsx
-│   └── BollywoodCodenames.tsx
+│   ├── BollywoodCodenames.tsx
+│   └── FiveSecondRuleBoard.tsx
 ├── lib/db.ts                     # Prisma singleton
 ├── prisma/
 │   ├── schema.prisma

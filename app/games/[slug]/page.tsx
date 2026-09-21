@@ -64,6 +64,18 @@ const GAME_INFO: Record<string, { name: string; emoji: string; description: stri
       'First team to guess all their words wins',
     ],
   },
+  '5-second-rule': {
+    name: '5 Second Rule',
+    emoji: '⏱️',
+    description: 'Name 3 things in a category before the 5-second timer runs out!',
+    rules: [
+      'One player sits in the "Hot Seat" for each round',
+      'Tap Start to reveal a category card, e.g. "Name 3 breakfast foods"',
+      'The Hot Seat player has 5 seconds to name 3 things that fit',
+      'Say all 3 before time runs out to score a point; the group judges each answer',
+      'The Hot Seat passes to the next player each round — most points after the agreed rounds wins',
+    ],
+  },
 }
 
 interface PageProps {
