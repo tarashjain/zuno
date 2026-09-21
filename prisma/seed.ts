@@ -63,6 +63,13 @@ async function main() {
     create: { name: '5 Second Rule', slug: '5-second-rule' },
   })
 
+  // Score Keeper (general round-by-round scorecard, no word bank needed)
+  await prisma.game.upsert({
+    where: { slug: 'score-keeper' },
+    update: {},
+    create: { name: 'Score Keeper', slug: 'score-keeper' },
+  })
+
   // Clear and re-seed words
   await prisma.gameWord.deleteMany({
     where: { gameId: { in: [imposterGame.id, bollywoodGame.id, fiveSecondRuleGame.id] } },

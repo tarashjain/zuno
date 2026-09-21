@@ -6,6 +6,7 @@ import HundredPointsBoard from '@/components/games/HundredPointsBoard'
 import ImposterBoard from '@/components/games/ImposterBoard'
 import BollywoodCodenames from '@/components/games/BollywoodCodenames'
 import FiveSecondRuleBoard from '@/components/games/FiveSecondRuleBoard'
+import ScorekeeperBoard from '@/components/games/ScorekeeperBoard'
 
 export default async function PlayGame({ params }: { params: { id: string } }) {
   const session = await prisma.gameSession.findUnique({
@@ -25,6 +26,7 @@ export default async function PlayGame({ params }: { params: { id: string } }) {
     imposter: ImposterBoard,
     'bollywood-code-names': BollywoodCodenames,
     '5-second-rule': FiveSecondRuleBoard,
+    'score-keeper': ScorekeeperBoard,
   }
 
   const ActiveGame = GameComponents[session.game.slug]

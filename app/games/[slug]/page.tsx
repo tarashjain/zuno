@@ -76,6 +76,17 @@ const GAME_INFO: Record<string, { name: string; emoji: string; description: stri
       'The Hot Seat passes to the next player each round — most points after the agreed rounds wins',
     ],
   },
+  'score-keeper': {
+    name: 'Score Keeper',
+    emoji: '📝',
+    description: 'A general-purpose scorecard — add players, play any game you like, and track the running total.',
+    rules: [
+      'Add players from the lobby before starting, same as any other game here',
+      'Each round, enter every player’s score for that round (negative numbers are fine)',
+      'Tap Complete Round to save it — everyone’s running total updates automatically',
+      'Keep playing rounds for whatever game you’re scoring — the leaderboard always shows the current totals',
+    ],
+  },
 }
 
 interface PageProps {

@@ -27,6 +27,7 @@ const CATEGORIES = [
       { name: 'Imposter',            slug: 'imposter',             desc: 'Find the imposter' },
       { name: 'Bollywood Codenames', slug: 'bollywood-code-names', desc: 'Bollywood spy words' },
       { name: '5 Second Rule',       slug: '5-second-rule',        desc: 'Name 3 before time runs out' },
+      { name: 'Score Keeper',        slug: 'score-keeper',         desc: 'General round-by-round scorecard' },
     ],
   },
 ]
