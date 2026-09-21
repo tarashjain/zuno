@@ -3,12 +3,6 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { compare } from 'bcryptjs'
 import prisma from '@/lib/db'
 
-const secret = process.env.NEXTAUTH_SECRET
-
-if (process.env.NODE_ENV === 'production' && !secret) {
-  throw new Error('NEXTAUTH_SECRET must be configured in production.')
-}
-
 export const authOptions: NextAuthOptions = {
   providers: [
     CredentialsProvider({
@@ -38,5 +32,5 @@ export const authOptions: NextAuthOptions = {
   session: {
     strategy: 'jwt',
   },
-  secret: secret ?? 'development-only-secret',
+  secret: process.env.NEXTAUTH_SECRET,
 }
