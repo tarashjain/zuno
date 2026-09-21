@@ -27,7 +27,8 @@ export default function LobbyLive({
   const [players, setPlayers] = useState(initialPlayers)
   const [myPlayerId, setMyPlayerId] = useState(initialMyPlayerId)
   const [guestName, setGuestName] = useState('')
-  const [error, setError] = useState<string | null>(null)
+  const [joinError, setJoinError] = useState<string | null>(null)
+  const [startError, setStartError] = useState<string | null>(null)
   const [pending, startTransition] = useTransition()
   const redirected = useRef(false)
 
@@ -61,11 +62,15 @@ export default function LobbyLive({
   const handleJoin = () => {
     const name = guestName.trim()
     if (!name) return
-    setError(null)
+    setJoinError(null)
     startTransition(async () => {
-      const id = await joinSession(sessionId, name)
-      setMyPlayerId(id)
-      setGuestName('')
+      const result = await joinSession(sessionId, name)
+      if (result.ok && result.id !== undefined) {
+        setMyPlayerId(result.id)
+        setGuestName('')
+      } else {
+        setJoinError(result.reason ?? 'Could not add that player.')
+      }
     })
   }
 
@@ -77,10 +82,10 @@ export default function LobbyLive({
   }
 
   const handleStart = () => {
-    setError(null)
+    setStartError(null)
     startTransition(async () => {
       const result = await startSession(sessionId)
-      if (result && !result.ok) setError(result.reason ?? 'Could not start the game.')
+      if (result && !result.ok) setStartError(result.reason ?? 'Could not start the game.')
     })
   }
 
@@ -110,6 +115,9 @@ export default function LobbyLive({
             >
               {isLocal ? 'Add Player' : 'Join Lobby'}
             </button>
+            {joinError && (
+              <p className="text-xs font-bold text-[#dc2626] text-center">{joinError}</p>
+            )}
           </div>
 
           {!isLocal && myPlayerId !== null && me && (
@@ -179,8 +187,8 @@ export default function LobbyLive({
                   Waiting for everyone to be ready…
                 </p>
               )}
-              {error && (
-                <p className="text-xs font-bold text-[#dc2626] mt-2 text-center">{error}</p>
+              {startError && (
+                <p className="text-xs font-bold text-[#dc2626] mt-2 text-center">{startError}</p>
               )}
             </>
           ) : (

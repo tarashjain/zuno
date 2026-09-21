@@ -19,8 +19,27 @@ export async function submitScore(
   revalidatePath(`/room/${sessionId}/play`)
 }
 
-export async function joinSession(sessionId: string, guestName: string) {
-  const player = await prisma.sessionPlayer.create({ data: { sessionId, guestName } })
+export async function joinSession(
+  sessionId: string,
+  guestName: string
+): Promise<{ ok: boolean; id?: number; reason?: string }> {
+  const name = guestName.trim()
+  if (!name) return { ok: false, reason: 'Enter a name.' }
+
+  const existing = await prisma.sessionPlayer.findFirst({
+    where: { sessionId, guestName: { equals: name, mode: 'insensitive' } },
+  })
+  if (existing) return { ok: false, reason: `"${name}" is already in this game — pick a different name.` }
+
+  let player
+  try {
+    player = await prisma.sessionPlayer.create({ data: { sessionId, guestName: name } })
+  } catch (err: any) {
+    if (err?.code === 'P2002') {
+      return { ok: false, reason: `"${name}" is already in this game — pick a different name.` }
+    }
+    throw err
+  }
 
   cookies().set(playerCookieName(sessionId), String(player.id), {
     path: `/room/${sessionId}`,
@@ -29,7 +48,7 @@ export async function joinSession(sessionId: string, guestName: string) {
   })
 
   revalidatePath(`/room/${sessionId}`)
-  return player.id
+  return { ok: true, id: player.id }
 }
 
 export async function toggleReady(sessionId: string, playerId: number) {
