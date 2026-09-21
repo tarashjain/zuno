@@ -13,6 +13,7 @@ export default async function GameRoom({ params }: { params: { id: string } }) {
   // Auto-redirect if already started
   if (session.status === 'active') redirect(`/room/${params.id}/play`)
 
+  const isLocal = session.mode === 'local'
   const roomCode = params.id.split('-')[0].toUpperCase()
 
   return (
@@ -25,19 +26,32 @@ export default async function GameRoom({ params }: { params: { id: string } }) {
         <span className="text-[var(--muted)] font-semibold text-sm break-words">| {session.game.name}</span>
       </div>
 
-      {/* Room code */}
-      <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4 mb-6 flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Room Code</p>
-          <p className="text-2xl sm:text-3xl font-extrabold tracking-widest mt-1 break-all">{roomCode}</p>
+      {/* Mode banner */}
+      {isLocal ? (
+        <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4 mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Local Game</p>
+            <p className="text-sm font-semibold mt-1">Add every player below on this device — no code needed.</p>
+          </div>
+          <span className="text-4xl">🖥️</span>
         </div>
-        <span className="text-4xl">🎮</span>
-      </div>
+      ) : (
+        <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4 mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Room Code</p>
+            <p className="text-2xl sm:text-3xl font-extrabold tracking-widest mt-1 break-all">{roomCode}</p>
+            <p className="text-xs font-semibold text-[var(--muted)] mt-1">
+              Share this code — each player joins from their own device via Join Room.
+            </p>
+          </div>
+          <span className="text-4xl">📱</span>
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Join form */}
+        {/* Join / add player form */}
         <div className="bg-white border-2 border-[var(--border)] rounded-xl p-5">
-          <h2 className="text-lg font-extrabold mb-4">Join Game</h2>
+          <h2 className="text-lg font-extrabold mb-4">{isLocal ? 'Add Player' : 'Join Game'}</h2>
           <form
             action={async (fd: FormData) => {
               'use server'
@@ -57,7 +71,7 @@ export default async function GameRoom({ params }: { params: { id: string } }) {
               type="submit"
               className="bg-[#16a34a] text-white py-3 rounded-xl font-bold hover:brightness-110 transition-all shadow-[0_2px_0_#166534]"
             >
-              Join Lobby
+              {isLocal ? 'Add Player' : 'Join Lobby'}
             </button>
           </form>
         </div>
@@ -105,9 +119,11 @@ export default async function GameRoom({ params }: { params: { id: string } }) {
         </div>
       </div>
 
-      {/* Refresh hint */}
+      {/* Footer hint */}
       <p className="text-center text-xs text-[var(--muted)] font-semibold mt-6">
-        Refresh this page after others join to see them appear.
+        {isLocal
+          ? 'Add everyone playing on this device, then hit Start Game.'
+          : 'Refresh this page after others join to see them appear.'}
       </p>
     </main>
   )

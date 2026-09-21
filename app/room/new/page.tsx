@@ -14,9 +14,10 @@ const GAME_NAMES: Record<string, string> = {
 export default async function NewRoom({
   searchParams,
 }: {
-  searchParams: { game?: string }
+  searchParams: { game?: string; mode?: string }
 }) {
   const gameSlug = searchParams.game
+  const mode = searchParams.mode === 'local' ? 'local' : 'individual'
 
   if (!gameSlug || !GAME_NAMES[gameSlug]) {
     redirect('/')
@@ -35,6 +36,7 @@ export default async function NewRoom({
     data: {
       gameId: game.id,
       status: 'lobby',
+      mode,
     },
   })
 

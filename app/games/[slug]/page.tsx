@@ -125,12 +125,20 @@ export default async function GamePage({ params }: PageProps) {
         {/* Action buttons */}
         <div className="flex gap-3 flex-wrap">
           {session ? (
-            <Link
-              href={`/room/new?game=${params.slug}`}
-              className="px-6 py-3 bg-[var(--accent)] text-white font-bold rounded-lg hover:brightness-110 transition-all"
-            >
-              Start New Game
-            </Link>
+            <>
+              <Link
+                href={`/room/new?game=${params.slug}&mode=local`}
+                className="px-6 py-3 bg-[var(--accent)] text-white font-bold rounded-lg hover:brightness-110 transition-all"
+              >
+                🖥️ Play Local
+              </Link>
+              <Link
+                href={`/room/new?game=${params.slug}&mode=individual`}
+                className="px-6 py-3 bg-[var(--surface2)] text-[var(--text)] font-bold rounded-lg border border-[var(--border)] hover:border-[var(--accent)] transition-all"
+              >
+                📱 Play Individually
+              </Link>
+            </>
           ) : (
             <Link
               href="/auth/signin"
@@ -146,6 +154,12 @@ export default async function GamePage({ params }: PageProps) {
             ← Back
           </Link>
         </div>
+
+        {session && (
+          <p className="text-xs text-[var(--muted)] font-semibold mt-3">
+            <strong>Local</strong>: one device, add every player yourself, no room code needed. <strong>Individually</strong>: share a room code and each player joins from their own device.
+          </p>
+        )}
       </div>
 
       {/* Rules */}
