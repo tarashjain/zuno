@@ -122,7 +122,7 @@ export default function WavelengthBoard({ session, players: initialPlayers, isHo
                   {players.map(p => (
                     <div key={p.id} className="flex items-center justify-between px-3 py-2 border rounded-lg">
                       <div>{p.guestName}</div>
-                      <div className="text-sm font-bold">{boardState.teams[String(p.id)] ?? '—'}</div>
+                      <div className="text-sm font-bold">{boardState?.teams?.[String(p.id)] ?? '—'}</div>
                     </div>
                   ))}
                 </div>
