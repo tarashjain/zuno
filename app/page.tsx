@@ -41,24 +41,9 @@ export default async function Home() {
         <p className="text-[var(--muted)] text-lg md:text-xl font-medium max-w-md mx-auto mb-8">
           Score, track, and play your favourite party games — all in one place.
         </p>
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-          {session ? (
-            <>
-              <Link
-                href="/games/farkle"
-                className="w-full sm:w-auto px-8 py-3.5 bg-[var(--accent)] text-white font-bold rounded-2xl hover:brightness-110 transition-all text-base"
-              >
-                Start a Game →
-              </Link>
-              <Link
-                href="/history"
-                className="w-full sm:w-auto px-8 py-3.5 bg-[var(--surface2)] border border-[var(--border)] font-bold rounded-2xl hover:border-[var(--accent)] transition-all text-base text-center"
-              >
-                My History
-              </Link>
-            </>
-          ) : (
-            <>
+        {!session && (
+          <>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
               <Link
                 href="/auth/register"
                 className="w-full sm:w-auto px-8 py-3.5 bg-[var(--accent)] text-white font-bold rounded-2xl hover:brightness-110 transition-all text-base text-center"
@@ -71,15 +56,15 @@ export default async function Home() {
               >
                 Sign in
               </Link>
-            </>
-          )}
-        </div>
-        <p className="mt-5 text-sm font-semibold text-[var(--muted)]">
-          Have a room code?{' '}
-          <Link href="/join" className="text-[var(--accent)] font-bold hover:underline">
-            Join a Room →
-          </Link>
-        </p>
+            </div>
+            <p className="mt-5 text-sm font-semibold text-[var(--muted)]">
+              Have a room code?{' '}
+              <Link href="/join" className="text-[var(--accent)] font-bold hover:underline">
+                Join a Room →
+              </Link>
+            </p>
+          </>
+        )}
       </div>
 
       {/* Game categories */}

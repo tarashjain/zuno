@@ -3,10 +3,9 @@
 import { Suspense, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 
 function SignInForm() {
-  const router = useRouter()
   const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -28,7 +27,10 @@ function SignInForm() {
       if (result?.error) {
         setError('Invalid email or password')
       } else {
-        router.push(searchParams.get('callbackUrl') || '/')
+        // A full navigation (not router.push) so every server component — including the
+        // homepage hero, which reads the session on the server — re-renders with the new
+        // auth cookie instead of serving a stale, pre-sign-in Router Cache entry.
+        window.location.href = searchParams.get('callbackUrl') || '/'
       }
     } catch (err) {
       setError('An error occurred')
