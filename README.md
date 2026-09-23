@@ -1,114 +1,204 @@
-# Zuno — Party Game Hub
+# 🎮 ZUNO — Party Game Hub
 
-A Next.js 14 party game scorekeeper with Neon (PostgreSQL) database, deployable to Vercel.
+A real-time multiplayer party game platform. Play word games, card games, and dice games with friends in the same room or online via room codes.
 
-## Games Included
+## ✨ Features
 
-- 🎲 **Farkle** — Dice banking game with per-player score tracking
-- 🃏 **Judgement** — Bid & win tricks card game
-- 💯 **100 Points** — Bid & win tricks variant
-- 🕵️ **Imposter** — Find the imposter word game
-- 🎬 **Bollywood Codenames** — Bollywood-themed word spy game
-- ⏱️ **5 Second Rule** — Name 3 things in a category before the 5-second timer runs out
-- 📝 **Score Keeper** — General-purpose round-by-round scorecard for any game
+### Games
+- **Imposter** — Find the secret imposter by their description of a word
+- **Wavelength** — Guess where a clue points on a spectrum (0–100)
+- **Bollywood Codenames** — Team-based word-cluing game (Codenames variant)
+- **5-Second Rule** — Rapid-fire questions on categories (coming soon: 1000+ questions)
+- **Farkle** — Push-your-luck dice game
+- **Judgement** — Predict tricks in a card game
+- **100 Points** — Reach 100 points first (card game)
+- **Score Keeper** — Track and display game scores
 
----
+### Play Modes
+- **Local** (Pass & Play) — One device, players pass it around
+- **Share Code** — Remote play via room code (e.g., `AB123456`)
 
-## Setup
+### Authentication
+- Create an account to save scores and host rooms
+- Sign in to join existing rooms
 
-### 1. Clone & Install
+## 🚀 Quick Start
 
-```bash
-git clone <your-repo>
-cd zuno
-npm install
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database (e.g., Neon)
+
+### Setup
+
+1. **Clone the repo**
+   ```bash
+   git clone https://github.com/tarashjain/zuno.git
+   cd zuno
+   ```
+
+2. **Create `.env.local`**
+   ```bash
+   DATABASE_URL="postgresql://user:password@host:port/dbname?sslmode=require"
+   NEXTAUTH_SECRET="generate-a-long-random-string-here"
+   NEXTAUTH_URL="http://localhost:3000"
+   ```
+
+3. **Install dependencies**
+   ```bash
+   npm install
+   ```
+   
+   **Note**: If behind a corporate proxy (e.g., Zscaler), you may need to set:
+   ```bash
+   export NODE_EXTRA_CA_CERTS=/path/to/ca-cert.pem
+   ```
+
+4. **Sync database**
+   ```bash
+   npx prisma db push
+   ```
+
+5. **Seed game data**
+   ```bash
+   npm run db:seed
+   ```
+
+6. **Start dev server**
+   ```bash
+   npm run dev
+   ```
+
+   Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+## 📖 How to Play
+
+### Local Mode (Pass & Play)
+1. Navigate to a game (e.g., `/games/imposter`)
+2. Host adds players
+3. Pass the device around; each player takes their turn
+
+### Share Code Mode (Remote)
+1. Create an account and sign in
+2. Create or join a room via code
+3. Players join on their own devices
+4. Real-time game state syncs across all devices
+
+### Example Game: Imposter
+1. Host assigns or randomizes teams
+2. Each player secretly learns a word (except the imposter, who gets a similar word)
+3. Players describe their word without saying it
+4. Vote on who is the imposter
+5. Reveal and score!
+
+## 🛠️ Development
+
+### Architecture
+- **Frontend**: Next.js 14 with React Server Components
+- **Backend**: Next.js API routes + Server Actions
+- **Database**: PostgreSQL + Prisma ORM
+- **Auth**: NextAuth.js
+
+### Key Directories
 ```
-
-### 2. Create a Neon Database
-
-1. Go to [neon.tech](https://neon.tech) and create a free account
-2. Create a new project
-3. Copy the **Connection string** (looks like `postgresql://user:pass@ep-xxx.neon.tech/neondb?sslmode=require`)
-
-### 3. Configure Environment
-
-```bash
-cp .env.example .env
-```
-
-Edit `.env` and paste your Neon connection string:
-
-```env
-DATABASE_URL="postgresql://user:password@ep-xxxx.us-east-1.aws.neon.tech/neondb?sslmode=require"
-NEXTAUTH_SECRET="generate-a-long-random-value"
-NEXTAUTH_URL="http://localhost:3000"
-```
-
-Generate `NEXTAUTH_SECRET` with `openssl rand -base64 32` (or another cryptographically secure generator).
-
-### 4. Push Schema & Seed
-
-```bash
-npm run db:push      # creates tables in Neon
-npm run db:seed      # seeds games + word lists
-```
-
-### 5. Run Locally
-
-```bash
-npm run dev
-# Open http://localhost:3000
-```
-
----
-
-## Deploy to Vercel
-
-### Option A: Vercel CLI
-
-```bash
-npm i -g vercel
-vercel
-```
-
-### Option B: GitHub Import
-
-1. Push this repo to GitHub
-2. Go to [vercel.com/new](https://vercel.com/new)
-3. Import your repo
-4. Under **Environment Variables**, add:
-   - `DATABASE_URL` → your Neon connection string
-   - `NEXTAUTH_SECRET` → a long random secret
-   - `NEXTAUTH_URL` → your production URL
-5. Before the first deployment, run `npm run db:release` against the production database.
-6. Click **Deploy**
-
-The production build only generates Prisma Client and builds Next.js. It does not modify the database. Run `npm run db:release` as an explicit release step after reviewing schema changes; unlike the old build command, it does not accept destructive data loss automatically.
-
----
-
-## Project Structure
-
-```
-zuno/
 ├── app/
-│   ├── page.tsx                  # Homepage — pick a game
-│   ├── actions.ts                # Create session server action
-│   ├── actions/score.ts          # Score + player server actions
-│   └── room/[id]/
-│       ├── page.tsx              # Lobby
-│       └── play/page.tsx         # Game engine router
-├── components/games/
-│   ├── FarkleBoard.tsx
-│   ├── JudgementBoard.tsx
-│   ├── ImposterBoard.tsx
-│   ├── BollywoodCodenames.tsx
-│   ├── FiveSecondRuleBoard.tsx
-│   └── ScorekeeperBoard.tsx
-├── lib/db.ts                     # Prisma singleton
+│   ├── games/[slug]/            # Game pages
+│   ├── actions/                 # Server actions (game logic)
+│   ├── auth/                    # Sign in/register pages
+│   └── api/                     # API routes
+├── components/
+│   ├── games/                   # Game board components
+│   ├── room/                    # Room-related components
+│   └── ...
+├── lib/
+│   ├── db.ts                    # Prisma client
+│   ├── auth.ts                  # NextAuth config
+│   └── ...
 ├── prisma/
-│   ├── schema.prisma
-│   └── seed.ts
-└── .env.example
+│   ├── schema.prisma            # Database schema
+│   └── seed.ts                  # Database seeding
+└── public/                      # Static assets
 ```
-# zuno
+
+### Running Tests
+```bash
+npm run test
+```
+
+### Database Migrations
+```bash
+# Apply schema changes
+npx prisma db push
+
+# Generate migration file
+npx prisma migrate dev --name description
+
+# Reset database (dev only)
+npx prisma db push --skip-generate --force-reset
+```
+
+## 🔐 Security
+
+- Passwords are hashed with bcrypt
+- Sessions are secure and HTTP-only
+- Room access is controlled by room code + user auth
+- Game state is validated on the server
+
+## 📦 Deployment
+
+### Vercel (Recommended)
+1. Push to GitHub
+2. Connect repo to Vercel
+3. Set environment variables in Vercel dashboard
+4. Vercel auto-deploys on push
+
+### Other Platforms
+1. Set environment variables
+2. Run `npm run build`
+3. Run `npm run start`
+
+## 🤝 Contributing
+
+1. Fork the repo
+2. Create a feature branch (`git checkout -b feature/game-name`)
+3. Make your changes
+4. Commit (`git commit -m "Add game-name"`)
+5. Push (`git push origin feature/game-name`)
+6. Open a Pull Request
+
+## 📝 License
+
+MIT — Feel free to use, modify, and share!
+
+## 💡 Roadmap
+
+- [ ] Add 1000+ questions to 5-Second Rule
+- [ ] Implement Taboo
+- [ ] Add sound effects & animations
+- [ ] Mobile app (React Native)
+- [ ] Persistent leaderboards
+- [ ] Custom room themes
+
+## 🆘 Troubleshooting
+
+### Database Connection Error
+- Verify `DATABASE_URL` in `.env.local`
+- Check that your database server is running
+- For Neon, ensure IP is whitelisted
+
+### npm install Fails
+- Try: `npm install --legacy-peer-deps`
+- If behind proxy: Set `NODE_EXTRA_CA_CERTS` (see Setup)
+- Clear cache: `npm cache clean --force`
+
+### Games Not Loading
+- Run `npx prisma db push` to sync schema
+- Run `npm run db:seed` to populate game data
+- Check browser console for errors
+
+## 📧 Support
+
+For bugs or questions, open an issue on [GitHub](https://github.com/tarashjain/zuno/issues).
+
+---
+
+**Made with ❤️ for fun party nights**
