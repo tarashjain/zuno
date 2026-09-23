@@ -21,19 +21,16 @@ model Game {
   name     String
   slug     String        @unique
   sessions GameSession[]
-  words    GameWord[]
-}
-
-model GameWord {
-  id       Int    @id @default(autoincrement())
-  gameId   Int
-  word     String
-  pairWord String?
-  game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
 }
 
 // Bollywood Codenames — single clue words dealt onto the 5x5 grid.
 model BollywoodWord {
+  id   Int    @id @default(autoincrement())
+  word String @unique
+}
+
+// 5 Second Rule — category prompts, e.g. "Name 3 things that are silent".
+model FiveSecondRuleCard {
   id   Int    @id @default(autoincrement())
   word String @unique
 }

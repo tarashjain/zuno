@@ -31,7 +31,7 @@ async function main() {
   })
 
   // 5 Second Rule
-  const fiveSecondRuleGame = await prisma.game.upsert({
+  await prisma.game.upsert({
     where: { slug: '5-second-rule' },
     update: {},
     create: { name: '5 Second Rule', slug: '5-second-rule' },
@@ -51,13 +51,12 @@ async function main() {
     create: { name: 'Wavelength', slug: 'wavelength' },
   })
 
-  // Clear and re-seed 5 Second Rule cards (still on the shared GameWord table)
-  await prisma.gameWord.deleteMany({ where: { gameId: fiveSecondRuleGame.id } })
-  await prisma.gameWord.createMany({
-    data: FIVE_SECOND_RULE_GENERAL_CARDS.map(word => ({ gameId: fiveSecondRuleGame.id, word })),
+  // Clear and re-seed each game's own dedicated word bank
+  await prisma.fiveSecondRuleCard.deleteMany()
+  await prisma.fiveSecondRuleCard.createMany({
+    data: FIVE_SECOND_RULE_GENERAL_CARDS.map(word => ({ word })),
   })
 
-  // Clear and re-seed each game's own dedicated word bank
   await prisma.bollywoodWord.deleteMany()
   await prisma.bollywoodWord.createMany({
     data: BOLLYWOOD_WORDS.map(word => ({ word })),

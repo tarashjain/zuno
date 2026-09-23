@@ -28,7 +28,7 @@ export default async function PlayGame({ params }: { params: { id: string } }) {
   if (session.status !== 'active') redirect(`/room/${params.id}`)
 
   const words = session.game.slug === '5-second-rule'
-    ? await prisma.gameWord.findMany({ where: { gameId: session.gameId } })
+    ? await prisma.fiveSecondRuleCard.findMany()
     : []
 
   const GameComponents: Record<string, React.ElementType> = {
