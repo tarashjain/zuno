@@ -38,6 +38,11 @@ export default function ImposterBoard({
       .catch(() => undefined)
   }, [boardState?.revealed, myPlayerId, reveal, session.id])
 
+  useEffect(() => {
+    setSecrets({})
+    setReveal(null)
+  }, [boardState?.roundKey])
+
   const newRound = async () => {
     setLoading(true)
     setError(null)
