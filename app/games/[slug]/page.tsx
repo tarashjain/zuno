@@ -30,15 +30,12 @@ const GAME_INFO: Record<string, { name: string; emoji: string; description: stri
   '100-points': {
     name: '100 Points',
     emoji: '💯',
-    description: 'A running-total card game where players try to stay at or below 100.',
+    description: 'A simple round-based score tracker — cross 100 points and you\'re out.',
     rules: [
-      'Use a standard 52-card deck with jokers removed. Deal three cards to each player and place the rest face-down as the draw pile.',
-      'Card values: Aces = 1, number cards 2–8 = face value, 9s = 0, 10s = -10, and J/Q/K = +10.',
-      'The player to the left of the dealer plays any card face-up beside the draw pile, announces its value, and draws back to three cards.',
-      'Each next player plays one card onto the pile, announces the new running total, and draws a replacement card.',
-      'A player may never play a card that makes the running total exceed 100.',
-      'If a player has no card that keeps the total at or below 100, they bust, lose a chip/token, and pass their turn.',
-      'The game continues until all cards are drawn and played, or until only one player can continue. The last player remaining wins.',
+      'Play whatever card game (or other scoring game) your group likes off-app — this just tracks the running totals and eliminations.',
+      'Each round, every player enters their own points for that round, which are added to their running total.',
+      'Once a player\'s running total reaches 100 or more, they\'re eliminated.',
+      'Play continues, round after round, until only one player is left standing — they win.',
     ],
   },
   imposter: {

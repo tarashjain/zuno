@@ -1,140 +1,65 @@
 'use client'
-import { useMemo, useState } from 'react'
-import { submitScore } from '@/app/actions/score'
+import { useEffect, useState } from 'react'
+import { submitHundredPointsEntry, completeHundredPointsRound, type HundredPointsPublic } from '@/app/actions/hundred-points'
 import { useLiveBoard } from '@/components/room/useLiveBoard'
 
-type ScoreEntry = { points: number; round: number; notes?: string | null }
-type Player = { id: number; guestName: string; scores: ScoreEntry[] }
-type Session = { id: string }
+type Player = { id: number; guestName: string; scores: { points: number; round: number; notes?: string | null }[] }
+type Session = { id: string; mode: string }
 
-type CardOption = { label: string; value: number }
-type HundredPointsState = {
-  runningTotal: number
-  turn: number
-  currentPlayerIndex: number
-}
+const DEFAULT_STATE: HundredPointsPublic = { kind: 'hundred-points', round: 1, roundKey: 'initial', entries: {}, eliminated: [], winnerIds: null }
 
-const CARD_OPTIONS: CardOption[] = [
-  { label: 'A', value: 1 },
-  { label: '2', value: 2 },
-  { label: '3', value: 3 },
-  { label: '4', value: 4 },
-  { label: '5', value: 5 },
-  { label: '6', value: 6 },
-  { label: '7', value: 7 },
-  { label: '8', value: 8 },
-  { label: '9', value: 0 },
-  { label: '10', value: -10 },
-  { label: 'J', value: 10 },
-  { label: 'Q', value: 10 },
-  { label: 'K', value: 10 },
-]
-
-const STARTING_TOKENS = 3
-const DEFAULT_STATE: HundredPointsState = { runningTotal: 0, turn: 1, currentPlayerIndex: 0 }
-
-function scoreTotal(p: Player) {
-  return p.scores.reduce((s, x) => s + x.points, 0)
-}
-
-function tokensLeft(p: Player) {
-  return Math.max(0, STARTING_TOKENS + scoreTotal(p))
-}
-
-export default function HundredPointsBoard({ session, players: initialPlayers }: { session: Session; players: Player[] }) {
-  const { boardState, setBoardState, players, setPlayers } = useLiveBoard<HundredPointsState, Player>(
-    session.id,
-    DEFAULT_STATE,
-    initialPlayers
-  )
-  const [selectedCard, setSelectedCard] = useState('')
-  const [toast, setToast] = useState<string | null>(null)
+export default function HundredPointsBoard({ session, players: initialPlayers, isHost, myPlayerId }: { session: Session; players: Player[]; isHost: boolean; myPlayerId: number | null }) {
+  const { boardState, replaceBoardState, players } = useLiveBoard<HundredPointsPublic, Player>(session.id, DEFAULT_STATE, initialPlayers)
+  const [myEntryInput, setMyEntryInput] = useState('')
+  const [localEntries, setLocalEntries] = useState<Record<number, string>>({})
   const [saving, setSaving] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
-  const { runningTotal, turn, currentPlayerIndex } = boardState
+  const isLocal = session.mode === 'local'
+  const total = (p: Player) => p.scores.reduce((s, x) => s + x.points, 0)
+  const isEliminated = (p: Player) => boardState.eliminated.includes(p.id)
+  const activePlayers = players.filter(p => !isEliminated(p))
+  const finished = boardState.winnerIds !== null
 
-  const activePlayers = useMemo(() => players.filter(p => tokensLeft(p) > 0), [players])
-  const winner = activePlayers.length === 1 ? activePlayers[0] : null
-  const currentPlayer = players[currentPlayerIndex]
-  const card = CARD_OPTIONS.find(c => c.label === selectedCard)
-  const previewTotal = card ? runningTotal + card.value : null
-  const wouldBust = previewTotal !== null && previewTotal > 100
+  useEffect(() => {
+    setMyEntryInput('')
+    setLocalEntries({})
+    setError(null)
+  }, [boardState.roundKey])
 
-  const showToast = (msg: string) => { setToast(msg); setTimeout(() => setToast(null), 2500) }
+  const allEntriesIn = activePlayers.length > 0 && activePlayers.every(p => boardState.entries[String(p.id)] !== null && boardState.entries[String(p.id)] !== undefined)
 
-  const moveToNextActivePlayer = (fromIndex = currentPlayerIndex, updatedPlayers = players) => {
-    if (updatedPlayers.filter(p => tokensLeft(p) > 0).length <= 1) return fromIndex
-
-    for (let offset = 1; offset <= updatedPlayers.length; offset += 1) {
-      const nextIndex = (fromIndex + offset) % updatedPlayers.length
-      if (tokensLeft(updatedPlayers[nextIndex]) > 0) return nextIndex
-    }
-
-    return fromIndex
-  }
-
-  const playCard = async () => {
-    if (!currentPlayer || !card) return
-    if (tokensLeft(currentPlayer) <= 0) {
-      showToast(`${currentPlayer.guestName} is out of tokens.`)
-      return
-    }
-    if (wouldBust || previewTotal === null) {
-      showToast('That card would take the pile over 100. Bust instead or choose another card.')
-      return
-    }
-
+  const submitMyEntry = async () => {
+    if (!myPlayerId || myEntryInput === '') return
     setSaving(true)
-    const notes = `Played ${card.label} (${card.value >= 0 ? '+' : ''}${card.value}); total ${runningTotal} → ${previewTotal}`
-    await submitScore(session.id, currentPlayer.id, 0, turn, notes)
-
-    const updatedPlayers = players.map(p => p.id === currentPlayer.id
-      ? { ...p, scores: [...p.scores, { points: 0, round: turn, notes }] }
-      : p
-    )
-    setPlayers(updatedPlayers)
-    setSelectedCard('')
-    setBoardState({
-      runningTotal: previewTotal,
-      turn: turn + 1,
-      currentPlayerIndex: moveToNextActivePlayer(currentPlayerIndex, updatedPlayers),
-    })
-    setSaving(false)
-    showToast(`${currentPlayer.guestName} played ${card.label}. Total is ${previewTotal}.`)
+    setError(null)
+    try {
+      const next = await submitHundredPointsEntry(session.id, myPlayerId, parseInt(myEntryInput) || 0)
+      replaceBoardState(next)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not submit your points')
+    } finally { setSaving(false) }
   }
 
-  const bustPlayer = async () => {
-    if (!currentPlayer) return
-    if (tokensLeft(currentPlayer) <= 0) {
-      showToast(`${currentPlayer.guestName} is already out.`)
-      return
-    }
-
+  const completeRound = async () => {
     setSaving(true)
-    const notes = `Bust at total ${runningTotal}; lost 1 token`
-    await submitScore(session.id, currentPlayer.id, -1, turn, notes)
-
-    const updatedPlayers = players.map(p => p.id === currentPlayer.id
-      ? { ...p, scores: [...p.scores, { points: -1, round: turn, notes }] }
-      : p
-    )
-
-    setPlayers(updatedPlayers)
-    setSelectedCard('')
-    setBoardState({
-      ...boardState,
-      turn: turn + 1,
-      currentPlayerIndex: moveToNextActivePlayer(currentPlayerIndex, updatedPlayers),
-    })
-    setSaving(false)
-    showToast(`${currentPlayer.guestName} busted and lost a token.`)
+    setError(null)
+    try {
+      if (isLocal) {
+        for (const p of activePlayers) {
+          const points = parseInt(localEntries[p.id]) || 0
+          await submitHundredPointsEntry(session.id, p.id, points)
+        }
+      }
+      const next = await completeHundredPointsRound(session.id)
+      replaceBoardState(next)
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Could not complete the round')
+    } finally { setSaving(false) }
   }
 
-  const resetPile = () => {
-    setBoardState({ ...boardState, runningTotal: 0 })
-    setSelectedCard('')
-    showToast('Pile reset to 0.')
-  }
+  const myEntry = myPlayerId !== null ? boardState.entries[String(myPlayerId)] : null
+  const iAmEliminated = myPlayerId !== null && boardState.eliminated.includes(myPlayerId)
 
   if (players.length === 0) {
     return (
@@ -147,102 +72,118 @@ export default function HundredPointsBoard({ session, players: initialPlayers }:
 
   return (
     <div>
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-        <div className="bg-white border-2 border-[var(--border)] rounded-xl px-4 py-3 text-center">
-          <div className="text-xs font-bold text-[var(--muted)] uppercase tracking-wide mb-1">Pile Total</div>
-          <div className="text-4xl font-mono text-[var(--accent)]">{runningTotal}</div>
-        </div>
-        <div className="bg-white border-2 border-[var(--border)] rounded-xl px-4 py-3 text-center">
-          <div className="text-xs font-bold text-[var(--muted)] uppercase tracking-wide mb-1">Turn</div>
-          <div className="text-4xl font-mono text-[var(--accent)]">{turn}</div>
-        </div>
-        <div className="bg-white border-2 border-[var(--border)] rounded-xl px-4 py-3 text-center">
-          <div className="text-xs font-bold text-[var(--muted)] uppercase tracking-wide mb-1">Current Player</div>
-          <div className="text-lg font-black truncate">{winner ? `${winner.guestName} wins!` : currentPlayer?.guestName}</div>
-        </div>
-      </div>
-
+      {/* Standings */}
       <div className="flex gap-3 flex-wrap mb-6">
-        {players.map((p, i) => {
-          const remaining = tokensLeft(p)
-          const isCurrent = i === currentPlayerIndex && !winner
+        {[...players].sort((a, b) => total(a) - total(b)).map(p => {
+          const out = isEliminated(p)
+          const won = boardState.winnerIds?.includes(p.id)
           return (
-            <div key={p.id} className={`bg-white border-2 rounded-xl px-4 py-3 min-w-[110px] text-center ${isCurrent ? 'border-[var(--accent)]' : 'border-[var(--border)]'}`}>
-              {isCurrent && <div className="text-xs font-bold text-[var(--accent)] mb-1">▶ TURN</div>}
-              {winner?.id === p.id && <div className="text-xs font-bold text-[var(--accent)] mb-1">👑 WINNER</div>}
+            <div key={p.id} className={`bg-white border-2 rounded-xl px-4 py-3 min-w-[110px] text-center ${out ? 'border-[var(--border)] opacity-50' : 'border-[var(--border)]'}`}>
+              {won && <div className="text-xs font-bold text-[var(--accent)] mb-1">👑 WINNER</div>}
+              {out && !won && <div className="text-xs font-bold text-red-500 mb-1">OUT</div>}
               <div className="text-xs font-bold text-[var(--muted)] uppercase tracking-wide mb-1">{p.guestName}</div>
-              <div className="text-2xl font-mono text-[var(--accent)]">{remaining}</div>
-              <div className="text-[10px] font-bold text-[var(--muted)] uppercase tracking-wide">tokens</div>
+              <div className="text-2xl font-mono text-[var(--accent)]">{total(p)}</div>
             </div>
           )
         })}
       </div>
 
-      <div className="bg-white border-2 border-[var(--border)] rounded-xl p-4 mb-5">
-        <div className="flex flex-col md:flex-row gap-3 md:items-end">
-          <label className="flex-1">
-            <span className="block text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-2">Card played</span>
-            <select
-              value={selectedCard}
-              onChange={e => setSelectedCard(e.target.value)}
-              disabled={!!winner || saving}
-              className="w-full border-2 border-[var(--border)] rounded-lg p-3 font-semibold bg-[var(--paper)] outline-none focus:border-[var(--accent)] transition-colors"
-            >
-              <option value="">Select card…</option>
-              {CARD_OPTIONS.map(option => (
-                <option key={option.label} value={option.label}>
-                  {option.label} ({option.value >= 0 ? '+' : ''}{option.value})
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <div className="min-w-[150px] bg-[var(--cream)] border-2 border-[var(--border)] rounded-lg p-3">
-            <div className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-1">New total</div>
-            <div className={`text-2xl font-mono font-bold ${wouldBust ? 'text-[#dc2626]' : 'text-[var(--accent)]'}`}>
-              {previewTotal ?? '—'}
-            </div>
+      {finished ? (
+        <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-5 text-center mb-5">
+          <div className="text-3xl mb-2">🎉</div>
+          <p className="font-bold text-lg">
+            {boardState.winnerIds && boardState.winnerIds.length > 0
+              ? `Winner: ${boardState.winnerIds.map(id => players.find(p => p.id === id)?.guestName).filter(Boolean).join(' & ')}`
+              : 'Game Over'}
+          </p>
+        </div>
+      ) : (
+        <>
+          <div className="inline-flex items-center gap-2 bg-[var(--ink)] text-[var(--paper)] text-xs font-bold tracking-widest uppercase px-4 py-2 rounded-full mb-5">
+            💯 Round {boardState.round}
           </div>
 
-          <button
-            onClick={playCard}
-            disabled={!selectedCard || !!winner || saving || wouldBust}
-            className="px-5 py-3 bg-[var(--accent)] text-white rounded-xl font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_2px_0_#b83208]"
-          >
-            {saving ? 'Saving…' : 'Play Card'}
-          </button>
+          {isLocal ? (
+            <div className="bg-white border-2 border-[var(--border)] rounded-xl overflow-x-auto mb-5">
+              <table className="w-full min-w-[380px]">
+                <thead>
+                  <tr className="bg-[var(--cream)] border-b-2 border-[var(--border)]">
+                    <th className="p-2 sm:p-3 text-left text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Player</th>
+                    <th className="p-2 sm:p-3 text-left text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Round Points</th>
+                    <th className="p-2 sm:p-3 text-left text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {activePlayers.map((p, idx) => (
+                    <tr key={p.id} className={idx < activePlayers.length - 1 ? 'border-b border-[var(--border)]' : ''}>
+                      <td className="p-2 sm:p-3 font-bold max-w-[150px] truncate">{p.guestName}</td>
+                      <td className="p-2 sm:p-3">
+                        <input
+                          type="number"
+                          className="w-20 border-2 border-[var(--border)] rounded-lg p-1.5 font-semibold bg-[var(--paper)] outline-none focus:border-[var(--accent)] transition-colors"
+                          value={localEntries[p.id] ?? ''}
+                          onChange={e => setLocalEntries(x => ({ ...x, [p.id]: e.target.value }))}
+                        />
+                      </td>
+                      <td className="p-2 sm:p-3 font-mono text-lg font-medium text-[var(--accent)]">{total(p)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="bg-white border-2 border-[var(--border)] rounded-xl p-4 mb-5">
+              {iAmEliminated ? (
+                <p className="text-sm font-bold text-red-500">You're out this game — watch the standings above.</p>
+              ) : myPlayerId !== null && myEntry === null ? (
+                <div className="flex gap-2">
+                  <input
+                    type="number"
+                    value={myEntryInput}
+                    onChange={e => setMyEntryInput(e.target.value)}
+                    placeholder="Your points this round"
+                    className="flex-1 border-2 border-[var(--border)] rounded-lg p-2.5 font-semibold bg-[var(--paper)] outline-none focus:border-[var(--accent)] transition-colors"
+                  />
+                  <button onClick={submitMyEntry} disabled={saving || myEntryInput === ''} className="px-4 py-2.5 bg-[var(--accent)] text-white rounded-lg font-bold disabled:opacity-50 hover:brightness-110 transition-all">
+                    Submit
+                  </button>
+                </div>
+              ) : myPlayerId !== null ? (
+                <p className="text-sm font-bold text-[var(--accent)]">Your points this round: {myEntry} — waiting on others…</p>
+              ) : null}
 
-          <button
-            onClick={bustPlayer}
-            disabled={!!winner || saving}
-            className="px-5 py-3 bg-[#dc2626] text-white rounded-xl font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_2px_0_#991b1b]"
-          >
-            Bust
-          </button>
-        </div>
-      </div>
+              <div className="flex gap-2 flex-wrap mt-3">
+                {activePlayers.map(p => {
+                  const submitted = boardState.entries[String(p.id)] !== null && boardState.entries[String(p.id)] !== undefined
+                  return (
+                    <span key={p.id} className={`text-xs font-bold px-2 py-1 rounded-full ${submitted ? 'bg-green-100 text-green-800' : 'bg-[var(--surface2)] text-[var(--muted)]'}`}>
+                      {p.guestName} {submitted ? `(${boardState.entries[String(p.id)]})` : '…'}
+                    </span>
+                  )
+                })}
+              </div>
+            </div>
+          )}
 
-      <div className="flex flex-col sm:flex-row gap-3 mb-5">
-        <button
-          onClick={resetPile}
-          disabled={saving}
-          className="flex-1 py-3 bg-[var(--surface2)] border-2 border-[var(--border)] rounded-xl font-bold hover:border-[var(--accent)] disabled:opacity-50 transition-all"
-        >
-          Reset Pile to 0
-        </button>
-      </div>
+          <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-3 mb-5 text-xs font-semibold text-[var(--muted)] space-y-1">
+            <p>Each round, every player enters their own points for that round.</p>
+            <p>Once a player's running total reaches 100 or more, they're out.</p>
+            <p>Play continues until one player is left standing — they win.</p>
+          </div>
 
-      <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-3 mb-5 text-xs font-semibold text-[var(--muted)] space-y-1">
-        <p>Card values: A = 1, 2–8 = face value, 9 = 0, 10 = -10, J/Q/K = +10.</p>
-        <p>Players must keep the pile at 100 or below. If they cannot, tap Bust and they lose 1 token.</p>
-        <p>The last player with tokens remaining wins.</p>
-      </div>
-
-      {toast && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 bg-[var(--ink)] text-[var(--paper)] text-sm font-bold px-5 py-3 rounded-full z-50 shadow-lg">
-          {toast}
-        </div>
+          {(isLocal || isHost) && (
+            <button
+              onClick={completeRound}
+              disabled={saving || (!isLocal && !allEntriesIn)}
+              className="w-full py-3 bg-[var(--accent)] text-white rounded-xl font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_2px_0_#b83208]"
+            >
+              {saving ? 'Saving…' : `Complete Round ${boardState.round} →`}
+            </button>
+          )}
+        </>
       )}
+
+      {error && <p className="mt-4 text-center text-sm font-bold text-red-600">{error}</p>}
     </div>
   )
 }
