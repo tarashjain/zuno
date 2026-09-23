@@ -1,5 +1,4 @@
 'use server'
-import { randomUUID } from 'crypto'
 import { Prisma } from '@prisma/client'
 import prisma from '@/lib/db'
 import { requireRoomActor, requireRoomHost } from '@/lib/room-auth'
@@ -66,7 +65,7 @@ export async function getWavelengthSecret(sessionId: string, requestedPlayerId: 
   if (!session || publicState?.kind !== 'wavelength' || secretState?.kind !== 'wavelength') throw new Error('No Wavelength round is active.')
   if (!session.players.some(p => p.id === requestedPlayerId)) throw new Error('Player does not belong to this room.')
 
-  return { target: secretState.target, band: secretState.band }
+  return { target: secretState.target }
 }
 
 export async function startTeamGuessing(sessionId: string) {

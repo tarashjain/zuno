@@ -16,7 +16,7 @@ type PublicState = {
 } | null
 
 export default function WavelengthBoard({ session, players: initialPlayers, isHost, myPlayerId }: { session: Session; players: Player[]; isHost: boolean; myPlayerId: number | null }) {
-  const { boardState, replaceBoardState, players } = useLiveBoard<PublicState, Player>(session.id, null, initialPlayers)
+  const { boardState, replaceBoardState } = useLiveBoard<PublicState, Player>(session.id, null, initialPlayers)
   const [secret, setSecret] = useState<{ target: number } | null>(null)
   const [clue, setClue] = useState('')
   const [localPointer, setLocalPointer] = useState(50)
@@ -24,7 +24,6 @@ export default function WavelengthBoard({ session, players: initialPlayers, isHo
   const [error, setError] = useState<string | null>(null)
 
   const isMyTeam = boardState && myPlayerId && boardState.teams ? boardState.teams[String(myPlayerId)] : null
-  const psychicTeam = boardState && myPlayerId && boardState.teams ? boardState.teams[String(boardState.psychicId)] : null
   const isPsychic = boardState?.psychicId === myPlayerId
 
   useEffect(() => {
@@ -122,7 +121,7 @@ export default function WavelengthBoard({ session, players: initialPlayers, isHo
               {boardState.phase === 'psychic-set' ? '🎲 Psychic Setting Target' : boardState.phase === 'team-guess' ? '🎯 Team Guessing' : '✓ Revealed'}
             </div>
             <div className="text-lg font-black">
-              {Array.isArray(boardState.spectrum) ? boardState.spectrum[0] : boardState.spectrum.split(' → ')[0]} <span className="opacity-70">→</span> {Array.isArray(boardState.spectrum) ? boardState.spectrum[1] : boardState.spectrum.split(' → ')[1]}
+              {boardState.spectrum[0]} <span className="opacity-70">→</span> {boardState.spectrum[1]}
             </div>
           </div>
           {isHost && (
@@ -178,12 +177,12 @@ export default function WavelengthBoard({ session, players: initialPlayers, isHo
 
             {/* Left label */}
             <text x="10" y="135" fontSize="12" fontWeight="bold" fill="var(--ink)" textAnchor="start">
-              {Array.isArray(boardState.spectrum) ? boardState.spectrum[0] : boardState.spectrum.split(' → ')[0]}
+              {boardState.spectrum[0]}
             </text>
 
             {/* Right label */}
             <text x="250" y="135" fontSize="12" fontWeight="bold" fill="var(--ink)" textAnchor="end">
-              {Array.isArray(boardState.spectrum) ? boardState.spectrum[1] : boardState.spectrum.split(' → ')[1]}
+              {boardState.spectrum[1]}
             </text>
 
             {/* Target marker (hidden in psychic-set, visible in team-guess and revealed) */}
