@@ -41,6 +41,16 @@ export async function joinSession(
     if (!authSession?.user?.email || authSession.user.email !== room.hostEmail) {
       return { ok: false, reason: 'Only the host can add players to a local game.' }
     }
+  } else {
+    // In a share-code room, one device/browser may only join as a single player —
+    // everyone else must join from their own device using the room code.
+    const existingPlayerId = cookies().get(playerCookieName(sessionId))?.value
+    const existingPlayer = existingPlayerId
+      ? await prisma.sessionPlayer.findFirst({ where: { id: Number(existingPlayerId), sessionId }, select: { guestName: true } })
+      : null
+    if (existingPlayer) {
+      return { ok: false, reason: `You already joined this room as "${existingPlayer.guestName}".` }
+    }
   }
 
   const existing = await prisma.sessionPlayer.findFirst({

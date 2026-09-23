@@ -32,6 +32,26 @@ model GameWord {
   game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
 }
 
+// Bollywood Codenames — single clue words dealt onto the 5x5 grid.
+model BollywoodWord {
+  id   Int    @id @default(autoincrement())
+  word String @unique
+}
+
+// Imposter — each round picks one pair; everyone gets `word`, the imposter gets `pairWord`.
+model ImposterPair {
+  id       Int    @id @default(autoincrement())
+  word     String
+  pairWord String
+}
+
+// Wavelength — each round picks one spectrum; the psychic dials a hidden target between the two labels.
+model WavelengthSpectrum {
+  id         Int    @id @default(autoincrement())
+  leftLabel  String
+  rightLabel String
+}
+
 model GameSession {
   id         String          @id @default(uuid())
   gameId     Int

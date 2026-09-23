@@ -19,14 +19,6 @@ type WavelengthSecret = {
   band: number
 }
 
-const SPECTRA = [
-  'Hot → Cold',
-  'Boring Hobby → Interesting Hobby',
-  'Sad Song → Happy Song',
-  'Expensive → Cheap',
-  'Strong → Weak',
-]
-
 const asInputJson = (v: unknown) => v as Prisma.InputJsonValue
 
 export async function startWavelengthRound(sessionId: string): Promise<WavelengthPublic> {
@@ -37,7 +29,10 @@ export async function startWavelengthRound(sessionId: string): Promise<Wavelengt
   if (!session) throw new Error('Session not found')
   if (session.players.length === 0) throw new Error('Add at least one player.')
 
-  const spectrum = SPECTRA[Math.floor(Math.random() * SPECTRA.length)]
+  const spectra = await prisma.wavelengthSpectrum.findMany({ select: { leftLabel: true, rightLabel: true } })
+  if (spectra.length === 0) throw new Error('No Wavelength spectra are configured.')
+  const chosen = spectra[Math.floor(Math.random() * spectra.length)]
+  const spectrum = `${chosen.leftLabel} → ${chosen.rightLabel}`
   const psychic = session.players[Math.floor(Math.random() * session.players.length)]
   const publicState: WavelengthPublic = { kind: 'wavelength', spectrum, psychicId: psychic.id, revealed: false }
   // default teams: assign by join order alternating A/B

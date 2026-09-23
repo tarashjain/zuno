@@ -99,29 +99,9 @@ export default function LobbyLive({
         {/* Join / add player form */}
         <div className="bg-white border-2 border-[var(--border)] rounded-xl p-5">
           <h2 className="text-lg font-extrabold mb-4">{isLocal ? 'Add Player' : 'Join Game'}</h2>
-          <div className="flex flex-col gap-3">
-            <input
-              type="text"
-              placeholder="Your name…"
-              value={guestName}
-              onChange={e => setGuestName(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleJoin()}
-              className="p-3 border-2 border-[var(--border)] rounded-xl bg-[var(--paper)] font-semibold outline-none focus:border-[var(--accent)] transition-colors"
-            />
-            <button
-              onClick={handleJoin}
-              disabled={pending || !guestName.trim()}
-              className="bg-[#16a34a] text-white py-3 rounded-xl font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_2px_0_#166534]"
-            >
-              {isLocal ? 'Add Player' : 'Join Lobby'}
-            </button>
-            {joinError && (
-              <p className="text-xs font-bold text-[#dc2626] text-center">{joinError}</p>
-            )}
-          </div>
 
-          {!isLocal && myPlayerId !== null && me && (
-            <div className="mt-4 pt-4 border-t border-[var(--border)]">
+          {!isLocal && myPlayerId !== null && me ? (
+            <div>
               <p className="text-sm font-semibold text-[var(--muted)] mb-2">
                 You joined as <strong className="text-[var(--text)]">{me.guestName}</strong>
               </p>
@@ -136,6 +116,32 @@ export default function LobbyLive({
               >
                 {me.ready ? '✅ Ready!' : "I'm Ready"}
               </button>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              <input
+                type="text"
+                placeholder="Your name…"
+                value={guestName}
+                onChange={e => setGuestName(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && handleJoin()}
+                className="p-3 border-2 border-[var(--border)] rounded-xl bg-[var(--paper)] font-semibold outline-none focus:border-[var(--accent)] transition-colors"
+              />
+              <button
+                onClick={handleJoin}
+                disabled={pending || !guestName.trim()}
+                className="bg-[#16a34a] text-white py-3 rounded-xl font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_2px_0_#166534]"
+              >
+                {isLocal ? 'Add Player' : 'Join Lobby'}
+              </button>
+              {!isLocal && (
+                <p className="text-xs font-semibold text-[var(--muted)] text-center">
+                  This joins you personally, from this device. Other players join with the room code from their own device.
+                </p>
+              )}
+              {joinError && (
+                <p className="text-xs font-bold text-[#dc2626] text-center">{joinError}</p>
+              )}
             </div>
           )}
         </div>
