@@ -109,7 +109,7 @@ export default function WavelengthBoard({ session, players: initialPlayers, isHo
   }
 
   if (!boardState) {
-    const notEnoughPlayers = !isLocal && initialPlayers.length < 4
+    const notEnoughPlayers = isLocal ? initialPlayers.length < 2 : initialPlayers.length < 4
     return (
       <div className="max-w-md mx-auto">
         <div className="bg-gradient-to-br from-[#8b5cf6] to-[#6366f1] rounded-2xl p-8 text-center text-white mb-6">
@@ -123,7 +123,9 @@ export default function WavelengthBoard({ session, players: initialPlayers, isHo
 
         {notEnoughPlayers && (
           <p className="text-center text-sm font-bold text-amber-600 mb-4">
-            Share-code Wavelength needs at least 4 players, split into two teams.
+            {isLocal
+              ? 'Add at least 2 players so they can be split into two teams.'
+              : 'Share-code Wavelength needs at least 4 players, split into two teams.'}
           </p>
         )}
 
@@ -162,8 +164,8 @@ export default function WavelengthBoard({ session, players: initialPlayers, isHo
         </div>
       </div>
 
-      {/* Teams (share-code only) */}
-      {!isLocal && boardState.teams && (
+      {/* Teams */}
+      {boardState.teams && (
         <div className="bg-white border-2 border-[var(--border)] rounded-xl p-3">
           <div className="font-bold text-sm mb-2">Teams</div>
           <div className="grid grid-cols-2 gap-2">

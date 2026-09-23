@@ -32,7 +32,7 @@ export async function startWavelengthRound(sessionId: string): Promise<Wavelengt
 
   const isLocal = room.mode === 'local'
   if (isLocal) {
-    if (session.players.length === 0) throw new Error('Add at least one player.')
+    if (session.players.length < 2) throw new Error('Add at least two players so they can be split into two teams.')
   } else if (session.players.length < 4) {
     throw new Error('Share-code Wavelength needs at least 4 players split into two teams.')
   }
