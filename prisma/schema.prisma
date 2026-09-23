@@ -51,6 +51,7 @@ model WavelengthSpectrum {
 
 model GameSession {
   id         String          @id @default(uuid())
+  code       String          @unique // short join code, all-letters or all-digits (see lib/room-code.ts)
   gameId     Int
   status     String          @default("lobby")
   mode       String          @default("individual") // "local" (pass-and-play, host adds everyone) or "individual" (each player joins via room code)

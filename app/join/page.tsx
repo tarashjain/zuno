@@ -20,9 +20,9 @@ export default function JoinPage({
         <input
           type="text"
           name="code"
-          placeholder="e.g. 4F92A1B3"
+          placeholder="e.g. HKMPQR or 837294"
           required
-          maxLength={8}
+          maxLength={6}
           autoFocus
           autoComplete="off"
           defaultValue={searchParams.code ?? ''}

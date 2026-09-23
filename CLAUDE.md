@@ -105,7 +105,7 @@ npm run dev
 - Check sign-in/sign-out flow
 
 ## Room Code Format
-Rooms use format: `[2 letters][6 numbers]` (e.g., `AB123456`)
+Rooms use a 6-character code that is **all letters** (e.g. `HKMPQR`, excluding ambiguous I/O) or **all digits** (e.g. `837294`, excluding ambiguous 0/1), chosen randomly per room and stored on `GameSession.code`. Never mixed alphanumeric. Generated in `lib/room-code.ts`. Shareable from the room lobby via Message (SMS) or WhatsApp buttons.
 
 ## Scoring System
 - Games award points; stored in `Score` table

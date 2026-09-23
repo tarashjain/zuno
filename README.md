@@ -16,7 +16,7 @@ A real-time multiplayer party game platform. Play word games, card games, and di
 
 ### Play Modes
 - **Local** (Pass & Play) — One device, players pass it around
-- **Share Code** — Remote play via room code (e.g., `AB123456`)
+- **Share Code** — Remote play via room code, shareable by message or WhatsApp (all-letters e.g. `HKMPQR`, or all-digits e.g. `837294`)
 
 ### Authentication
 - Create an account to save scores and host rooms

@@ -1,6 +1,7 @@
 import prisma from '@/lib/db'
 import { notFound, redirect } from 'next/navigation'
 import LobbyLive from '@/components/room/LobbyLive'
+import ShareCodeButtons from '@/components/room/ShareCodeButtons'
 import { getRoomActor } from '@/lib/room-auth'
 
 export default async function GameRoom({ params }: { params: { id: string } }) {
@@ -20,7 +21,7 @@ export default async function GameRoom({ params }: { params: { id: string } }) {
   }
 
   const isLocal = session.mode === 'local'
-  const roomCode = params.id.split('-')[0].toUpperCase()
+  const roomCode = session.code
 
   const isHost = actor.isHost
   const myPlayerId = actor.playerId
@@ -52,6 +53,7 @@ export default async function GameRoom({ params }: { params: { id: string } }) {
             <p className="text-xs font-semibold text-[var(--muted)] mt-1">
               Share this code — each player joins from their own device via Join Room.
             </p>
+            <ShareCodeButtons code={roomCode} gameName={session.game.name} />
           </div>
           <span className="text-4xl">📱</span>
         </div>
