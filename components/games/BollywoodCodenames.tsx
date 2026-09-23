@@ -91,18 +91,19 @@ export default function BollywoodCodenames({
   if (phase === 'setup') {
     const redPlayers = players.filter(p => playerTeams[String(p.id)] === 'red')
     const bluePlayers = players.filter(p => playerTeams[String(p.id)] === 'blue')
-    const canDeal = redPlayers.length > 0 && bluePlayers.length > 0
+    const canDeal = redPlayers.length >= 2 && bluePlayers.length >= 2
 
     return (
       <div className="max-w-md mx-auto">
         <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4 mb-6 text-sm font-semibold text-[var(--muted)]">
-          Split into two teams and pick a Spymaster for each — or let the host randomize both.
+          Split into two teams and pick a Spymaster for each — or let the host randomize both. Each team needs at
+          least 2 players, since the Spymaster cannot also guess.
         </div>
 
         {isHost && (
           <button
             onClick={() => run(() => randomizeCodenamesTeams(session.id))}
-            disabled={loading || players.length < 2}
+            disabled={loading || players.length < 4}
             className="w-full bg-[#7c3aed] text-white py-3 rounded-xl font-bold mb-5 hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_2px_0_#5b21b6]"
           >
             🎲 Randomize Teams &amp; Spymasters

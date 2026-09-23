@@ -180,7 +180,7 @@ export async function randomizeCodenamesTeams(sessionId: string): Promise<Codena
   const session = await getCodenamesSession(sessionId)
   const existing = await getExistingCodenamesPublic(sessionId)
   if (existing && existing.phase !== 'setup') throw new Error('Teams can only be changed before the round starts.')
-  if (session.players.length < 2) throw new Error('Add at least 2 players to form two teams.')
+  if (session.players.length < 4) throw new Error('Add at least 4 players — 2 per team, since the Spymaster cannot also guess.')
 
   const shuffled = shuffle(session.players.map(p => p.id))
   const mid = Math.ceil(shuffled.length / 2)
@@ -229,7 +229,9 @@ export async function startCodenamesGame(sessionId: string): Promise<CodenamesPu
   const playerTeams = existing?.playerTeams ?? {}
   const redIds = session.players.map(p => p.id).filter(id => playerTeams[String(id)] === 'red')
   const blueIds = session.players.map(p => p.id).filter(id => playerTeams[String(id)] === 'blue')
-  if (redIds.length === 0 || blueIds.length === 0) throw new Error('Assign at least one player to each team first.')
+  if (redIds.length < 2 || blueIds.length < 2) {
+    throw new Error('Each team needs at least 2 players — a Spymaster and at least one guesser.')
+  }
 
   // Fill in a spymaster at random for any team that doesn't have one yet.
   const spymasters = { ...(existing?.spymasters ?? { red: null, blue: null }) }
