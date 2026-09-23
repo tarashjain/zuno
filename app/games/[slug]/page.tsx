@@ -89,6 +89,21 @@ const GAME_INFO: Record<string, { name: string; emoji: string; description: stri
       'Alternate turns; first team to reach 10 points wins.',
     ],
   },
+  scrabble: {
+    name: 'Scrabble',
+    emoji: '🔤',
+    description: 'The classic word-tile board game — build words, rack up points, outscore everyone.',
+    rules: [
+      '2–4 players. Everyone draws 7 tiles from the bag to start.',
+      'The first word must be placed across the center star square.',
+      'Every word after that must connect to a tile already on the board, in one straight line with no gaps.',
+      'Scoring is automatic — letter values, double/triple letter squares, and double/triple word squares are all calculated for you, including any word formed crosswise. Placing all 7 tiles in one turn earns a 50-point bonus.',
+      'On your turn you may play a word, exchange any of your tiles for new ones (only when at least 7 tiles remain in the bag), or pass.',
+      'Word legality is on the honor system — like a physical set, there\'s no dictionary check, so the group polices what counts as a real word.',
+      'The game ends when the bag is empty and someone plays their last tile, or when every player passes in a row. Remaining tiles are subtracted from each player\'s score; if someone went out, they collect everyone else\'s leftover tile value as a bonus.',
+      'Highest final score wins.',
+    ],
+  },
   'score-keeper': {
     name: 'Score Keeper',
     emoji: '📝',

@@ -12,6 +12,7 @@ const GAME_NAMES: Record<string, string> = {
   '5-second-rule': '5 Second Rule',
   'score-keeper': 'Score Keeper',
   'wavelength': 'Wavelength',
+  'scrabble': 'Scrabble',
 }
 
 export default async function NewRoom({

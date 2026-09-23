@@ -28,6 +28,7 @@ const CATEGORIES = [
       { name: 'Bollywood Codenames', slug: 'bollywood-code-names', desc: 'Bollywood spy words' },
       { name: '5 Second Rule',       slug: '5-second-rule',        desc: 'Name 3 before time runs out' },
       { name: 'Wavelength',          slug: 'wavelength',           desc: 'Mind-reading on a shifting spectrum' },
+      { name: 'Scrabble',            slug: 'scrabble',             desc: 'Classic word-tile board game' },
     ],
   },
 ]

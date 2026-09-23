@@ -8,6 +8,7 @@ import BollywoodCodenames from '@/components/games/BollywoodCodenames'
 import FiveSecondRuleBoard from '@/components/games/FiveSecondRuleBoard'
 import ScorekeeperBoard from '@/components/games/ScorekeeperBoard'
 import WavelengthBoard from '@/components/games/WavelengthBoard'
+import ScrabbleBoard from '@/components/games/ScrabbleBoard'
 import { getRoomActor } from '@/lib/room-auth'
 
 export default async function PlayGame({ params }: { params: { id: string } }) {
@@ -39,6 +40,7 @@ export default async function PlayGame({ params }: { params: { id: string } }) {
     '5-second-rule': FiveSecondRuleBoard,
     'score-keeper': ScorekeeperBoard,
     'wavelength': WavelengthBoard,
+    'scrabble': ScrabbleBoard,
   }
 
   const ActiveGame = GameComponents[session.game.slug]

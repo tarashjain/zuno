@@ -6,7 +6,7 @@ import prisma from '@/lib/db'
 const CATEGORY_META: Record<string, { emoji: string; color: string; games: string[] }> = {
   'Dice Games':   { emoji: '🎲', color: '#f97316', games: ['Farkle'] },
   'Card Games':   { emoji: '🃏', color: '#3b82f6', games: ['Judgement', '100 Points'] },
-  'Word & Party': { emoji: '🎉', color: '#22c55e', games: ['Imposter', 'Bollywood Codenames', '5 Second Rule', 'Score Keeper'] },
+  'Word & Party': { emoji: '🎉', color: '#22c55e', games: ['Imposter', 'Bollywood Codenames', '5 Second Rule', 'Score Keeper', 'Wavelength', 'Scrabble'] },
 }
 
 const GAME_CATEGORY: Record<string, string> = {
@@ -17,6 +17,8 @@ const GAME_CATEGORY: Record<string, string> = {
   'bollywood-code-names': 'Word & Party',
   '5-second-rule': 'Word & Party',
   'score-keeper': 'Word & Party',
+  wavelength: 'Word & Party',
+  scrabble: 'Word & Party',
 }
 
 export default async function Home() {
@@ -111,7 +113,7 @@ export default async function Home() {
           {/* Stats strip */}
           <div className="mt-16 grid grid-cols-3 gap-4 border-t border-[var(--border)] pt-10">
             {[
-              { label: 'Games', value: '7' },
+              { label: 'Games', value: '9' },
               { label: 'Categories', value: '3' },
               { label: 'Free forever', value: '✓' },
             ].map(({ label, value }) => (
