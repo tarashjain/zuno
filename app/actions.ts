@@ -5,7 +5,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { generateRoomCode } from '@/lib/room-code'
 
-async function createUniqueRoomCode(): Promise<string> {
+export async function createUniqueRoomCode(): Promise<string> {
   for (let attempt = 0; attempt < 10; attempt++) {
     const code = generateRoomCode()
     const existing = await prisma.gameSession.findUnique({ where: { code } })

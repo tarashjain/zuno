@@ -2,6 +2,7 @@ import prisma from '@/lib/db'
 import { redirect } from 'next/navigation'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { createUniqueRoomCode } from '@/app/actions'
 
 const GAME_NAMES: Record<string, string> = {
   farkle: 'Farkle',
@@ -41,9 +42,11 @@ export default async function NewRoom({
     },
   })
 
+  const code = await createUniqueRoomCode()
   const session = await prisma.gameSession.create({
     data: {
       gameId: game.id,
+      code,
       status: 'lobby',
       mode,
       hostEmail: authSession.user.email,
