@@ -109,20 +109,6 @@ export default async function Home() {
               </div>
             ))}
           </div>
-
-          {/* Stats strip */}
-          <div className="mt-16 grid grid-cols-3 gap-4 border-t border-[var(--border)] pt-10">
-            {[
-              { label: 'Games', value: '9' },
-              { label: 'Categories', value: '3' },
-              { label: 'Free forever', value: '✓' },
-            ].map(({ label, value }) => (
-              <div key={label} className="text-center">
-                <div className="text-2xl md:text-3xl font-black text-[var(--accent)]">{value}</div>
-                <div className="text-xs text-[var(--muted)] font-semibold mt-1 uppercase tracking-wide">{label}</div>
-              </div>
-            ))}
-          </div>
         </>
       )}
     </div>

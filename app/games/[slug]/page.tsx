@@ -2,7 +2,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import prisma from '@/lib/db'
 
 const GAME_INFO: Record<string, { name: string; emoji: string; description: string; rules: string[] }> = {
   farkle: {
@@ -136,8 +135,6 @@ export default async function GamePage({ params }: PageProps) {
     )
   }
 
-  const game = await prisma.game.findUnique({ where: { slug: params.slug } })
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-10 md:py-16">
       {/* Game header */}
@@ -217,24 +214,6 @@ export default async function GamePage({ params }: PageProps) {
             ))}
           </div>
         </div>
-
-        {/* Game stats if available */}
-        {game && (
-          <div className="grid grid-cols-3 gap-4 border-t border-[var(--border)] pt-8">
-            <div className="p-4 bg-[var(--surface)] rounded-lg">
-              <div className="text-2xl font-black text-[var(--accent)]">{game.id}</div>
-              <div className="text-xs text-[var(--muted)] uppercase font-bold mt-1">Game ID</div>
-            </div>
-            <div className="p-4 bg-[var(--surface)] rounded-lg">
-              <div className="text-2xl font-black">0</div>
-              <div className="text-xs text-[var(--muted)] uppercase font-bold mt-1">Sessions</div>
-            </div>
-            <div className="p-4 bg-[var(--surface)] rounded-lg">
-              <div className="text-2xl font-black">0</div>
-              <div className="text-xs text-[var(--muted)] uppercase font-bold mt-1">Players</div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )
