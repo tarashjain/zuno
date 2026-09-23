@@ -223,6 +223,7 @@ export async function setCodenamesSpymaster(sessionId: string, team: PlayerTeam,
 export async function startCodenamesGame(sessionId: string): Promise<CodenamesPublic> {
   const { room } = await requireRoomHost(sessionId)
   if (room.status !== 'active') throw new Error('The game is not active.')
+  const isLocal = room.mode === 'local'
   const session = await getCodenamesSession(sessionId)
 
   const existing = await getExistingCodenamesPublic(sessionId)
@@ -261,8 +262,10 @@ export async function startCodenamesGame(sessionId: string): Promise<CodenamesPu
   const cardTeams: Record<string, CardTeam> = {}
   words.forEach((word, index) => { cardTeams[String(word.id)] = cardTeamPool[index] })
 
+  // Local (pass-and-play) skips the typed clue/number step — the Spymaster gives a verbal clue
+  // via the key card, and the team just taps cards until they pass, lose, or win.
   const publicState: CodenamesPublic = {
-    kind: 'codenames', phase: 'clue',
+    kind: 'codenames', phase: isLocal ? 'guess' : 'clue',
     playerTeams, spymasters,
     grid: words, revealed: {}, totals,
     turn: startingTeam, clue: null, guessesRemaining: null, winner: null,
@@ -322,10 +325,11 @@ export async function giveCodenamesClue(sessionId: string, playerId: number, wor
 }
 
 export async function passCodenamesTurn(sessionId: string, playerId: number): Promise<CodenamesPublic> {
-  await assertActingAsPlayer(sessionId, playerId)
+  const actor = await assertActingAsPlayer(sessionId, playerId)
+  const isLocalHost = actor.isHost && actor.room.mode === 'local'
   const existing = await getExistingCodenamesPublic(sessionId)
   if (!existing || existing.phase !== 'guess' || !existing.turn) throw new Error('There is nothing to pass right now.')
-  if (existing.playerTeams[String(playerId)] !== existing.turn) throw new Error("It is not your team's turn.")
+  if (!isLocalHost && existing.playerTeams[String(playerId)] !== existing.turn) throw new Error("It is not your team's turn.")
 
   const otherTeam: PlayerTeam = existing.turn === 'red' ? 'blue' : 'red'
   const nextState: CodenamesPublic = { ...existing, phase: 'clue', turn: otherTeam, clue: null, guessesRemaining: null }
@@ -334,13 +338,16 @@ export async function passCodenamesTurn(sessionId: string, playerId: number): Pr
 }
 
 export async function revealCodenamesCard(sessionId: string, playerId: number, cardId: number): Promise<CodenamesPublic> {
-  await assertActingAsPlayer(sessionId, playerId)
+  const actor = await assertActingAsPlayer(sessionId, playerId)
+  const isLocalHost = actor.isHost && actor.room.mode === 'local'
   const existing = await getExistingCodenamesPublic(sessionId)
   if (!existing || existing.phase !== 'guess' || !existing.turn || !existing.grid || !existing.totals) {
     throw new Error('No guess is expected right now.')
   }
-  if (existing.playerTeams[String(playerId)] !== existing.turn) throw new Error("It is not your team's turn.")
-  if (existing.spymasters[existing.turn] === playerId) throw new Error('The spymaster cannot reveal cards.')
+  if (!isLocalHost) {
+    if (existing.playerTeams[String(playerId)] !== existing.turn) throw new Error("It is not your team's turn.")
+    if (existing.spymasters[existing.turn] === playerId) throw new Error('The spymaster cannot reveal cards.')
+  }
   if (existing.revealed[String(cardId)]) throw new Error('That card is already revealed.')
   if (!existing.grid.some(card => card.id === cardId)) throw new Error('Card is not on this board.')
 

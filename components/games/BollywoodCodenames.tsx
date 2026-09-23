@@ -47,6 +47,7 @@ export default function BollywoodCodenames({
   isHost: boolean
   myPlayerId: number | null
 }) {
+  const isLocal = session.mode === 'local'
   const { boardState, replaceBoardState, players } = useLiveBoard<BoardState, Player>(session.id, null, initialPlayers)
   const [spymasterGrid, setSpymasterGrid] = useState<Record<string, CardTeam> | null>(null)
   const [loading, setLoading] = useState(false)
@@ -73,7 +74,7 @@ export default function BollywoodCodenames({
   const myTeam = myPlayerId !== null ? playerTeams[String(myPlayerId)] : undefined
   const iAmSpymasterOf = (team: PlayerTeam) => myPlayerId !== null && spymasters[team] === myPlayerId
   const canViewKeyCard =
-    myPlayerId !== null && (iAmSpymasterOf('red') || iAmSpymasterOf('blue') || (isHost && session.mode === 'local'))
+    myPlayerId !== null && (iAmSpymasterOf('red') || iAmSpymasterOf('blue') || (isHost && isLocal))
 
   // --- Setup phase ---
 
@@ -225,8 +226,13 @@ export default function BollywoodCodenames({
     return 'bg-white text-[var(--ink)] border-[var(--border)] hover:border-[var(--accent)]'
   }
 
-  const canGuessNow =
-    phase === 'guess' && myTeam !== undefined && myTeam === turn && myPlayerId !== null && spymasters[turn as PlayerTeam] !== myPlayerId
+  // Local (pass-and-play) has one shared device — whoever is holding it taps for whichever
+  // team is up, verbally coordinated in person, so there's no per-player/spymaster gating.
+  const canGuessNow = phase === 'guess' && (
+    isLocal
+      ? isHost
+      : myTeam !== undefined && myTeam === turn && myPlayerId !== null && spymasters[turn as PlayerTeam] !== myPlayerId
+  )
 
   return (
     <div>
@@ -245,7 +251,11 @@ export default function BollywoodCodenames({
       {phase !== 'over' && turn && (
         <div className="mb-4 bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4">
           <p className="font-extrabold">{TEAM_LABEL[turn]}&rsquo;s turn</p>
-          {clue ? (
+          {isLocal ? (
+            <p className="text-sm font-semibold text-[var(--muted)] mt-1">
+              {TEAM_LABEL[turn]} Spymaster gives a verbal clue, then tap cards to guess.
+            </p>
+          ) : clue ? (
             <p className="text-sm font-semibold text-[var(--muted)] mt-1">
               Clue: <strong className="text-[var(--text)]">&ldquo;{clue.word}&rdquo;</strong> —{' '}
               {clue.number === 0 ? 'unlimited' : clue.number}
@@ -259,7 +269,7 @@ export default function BollywoodCodenames({
         </div>
       )}
 
-      {phase === 'clue' && iAmSpymasterOf(turn as PlayerTeam) && (
+      {!isLocal && phase === 'clue' && iAmSpymasterOf(turn as PlayerTeam) && (
         <div className="mb-5 bg-white border-2 border-[var(--border)] rounded-xl p-4">
           <div className="flex gap-2">
             <input
@@ -304,7 +314,7 @@ export default function BollywoodCodenames({
         })}
       </div>
 
-      {phase === 'guess' && myTeam === turn && (
+      {phase === 'guess' && (isLocal ? isHost : myTeam === turn) && (
         <button
           onClick={pass}
           disabled={loading}
