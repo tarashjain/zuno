@@ -326,20 +326,28 @@ export async function giveCodenamesClue(sessionId: string, playerId: number, wor
 
 export async function passCodenamesTurn(sessionId: string, playerId: number): Promise<CodenamesPublic> {
   const actor = await assertActingAsPlayer(sessionId, playerId)
-  const isLocalHost = actor.isHost && actor.room.mode === 'local'
+  const isLocal = actor.room.mode === 'local'
+  const isLocalHost = actor.isHost && isLocal
   const existing = await getExistingCodenamesPublic(sessionId)
   if (!existing || existing.phase !== 'guess' || !existing.turn) throw new Error('There is nothing to pass right now.')
   if (!isLocalHost && existing.playerTeams[String(playerId)] !== existing.turn) throw new Error("It is not your team's turn.")
 
   const otherTeam: PlayerTeam = existing.turn === 'red' ? 'blue' : 'red'
-  const nextState: CodenamesPublic = { ...existing, phase: 'clue', turn: otherTeam, clue: null, guessesRemaining: null }
+  const nextState: CodenamesPublic = {
+    ...existing,
+    phase: isLocal ? 'guess' : 'clue',
+    turn: otherTeam,
+    clue: null,
+    guessesRemaining: null,
+  }
   await prisma.gameSession.update({ where: { id: sessionId }, data: { boardState: asInputJson(nextState) } })
   return nextState
 }
 
 export async function revealCodenamesCard(sessionId: string, playerId: number, cardId: number): Promise<CodenamesPublic> {
   const actor = await assertActingAsPlayer(sessionId, playerId)
-  const isLocalHost = actor.isHost && actor.room.mode === 'local'
+  const isLocal = actor.room.mode === 'local'
+  const isLocalHost = actor.isHost && isLocal
   const existing = await getExistingCodenamesPublic(sessionId)
   if (!existing || existing.phase !== 'guess' || !existing.turn || !existing.grid || !existing.totals) {
     throw new Error('No guess is expected right now.')
@@ -373,7 +381,7 @@ export async function revealCodenamesCard(sessionId: string, playerId: number, c
     } else {
       const remaining = existing.guessesRemaining === null ? null : existing.guessesRemaining - 1
       nextState = remaining !== null && remaining <= 0
-        ? { ...existing, revealed, phase: 'clue', turn: otherTeam, clue: null, guessesRemaining: null }
+        ? { ...existing, revealed, phase: isLocal ? 'guess' : 'clue', turn: otherTeam, clue: null, guessesRemaining: null }
         : { ...existing, revealed, guessesRemaining: remaining }
     }
   } else if (cardTeam !== 'neutral' && countRevealedFor(cardTeam) >= existing.totals[cardTeam]) {
@@ -381,7 +389,7 @@ export async function revealCodenamesCard(sessionId: string, playerId: number, c
     nextState = { ...existing, revealed, phase: 'over', winner: cardTeam, clue: null, guessesRemaining: null }
   } else {
     // Wrong guess (opponent's agent or a bystander) ends the turn.
-    nextState = { ...existing, revealed, phase: 'clue', turn: otherTeam, clue: null, guessesRemaining: null }
+    nextState = { ...existing, revealed, phase: isLocal ? 'guess' : 'clue', turn: otherTeam, clue: null, guessesRemaining: null }
   }
 
   await prisma.gameSession.update({ where: { id: sessionId }, data: { boardState: asInputJson(nextState) } })

@@ -65,7 +65,7 @@ export default async function PlayGame({ params }: { params: { id: string } }) {
 
       {ActiveGame ? (
         <ActiveGame
-          session={session}
+          session={{ id: session.id, mode: session.mode }}
           players={session.players}
           words={words}
           isHost={actor.isHost}
