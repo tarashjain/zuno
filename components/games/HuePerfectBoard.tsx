@@ -97,10 +97,11 @@ function ColorSwatch({ h, s, v, label, size = 120 }: { h: number; s: number; v: 
 }
 
 export default function HuePerfectBoard() {
-  const [names, setNames] = useState([''])
+  const [inputName, setInputName] = useState('')
+  const [pendingPlayers, setPendingPlayers] = useState<string[]>([])
+  const [addError, setAddError] = useState('')
   const [difficulty, setDifficulty] = useState<Difficulty>('easy')
   const [totalRounds, setTotalRounds] = useState(5)
-  const [setupError, setSetupError] = useState('')
 
   const [phase, setPhase] = useState<Phase>('setup')
   const [players, setPlayers] = useState<string[]>([])
@@ -196,76 +197,121 @@ export default function HuePerfectBoard() {
   const btn = 'px-5 py-3 rounded-xl font-bold transition-colors'
   const hueGradient = 'linear-gradient(to right,hsl(0,100%,50%),hsl(30,100%,50%),hsl(60,100%,50%),hsl(90,100%,50%),hsl(120,100%,50%),hsl(150,100%,50%),hsl(180,100%,50%),hsl(210,100%,50%),hsl(240,100%,50%),hsl(270,100%,50%),hsl(300,100%,50%),hsl(330,100%,50%),hsl(360,100%,50%))'
 
+  function handleAdd() {
+    const name = inputName.trim()
+    if (!name || pendingPlayers.length >= 8) return
+    if (pendingPlayers.some(p => p.toLowerCase() === name.toLowerCase())) {
+      setAddError(`"${name}" is already added — use a different name.`); return
+    }
+    setAddError('')
+    setPendingPlayers([...pendingPlayers, name])
+    setInputName('')
+  }
+
   if (phase === 'setup') return (
-    <main className="max-w-2xl mx-auto px-4 py-8 md:py-12">
-      <Link href="/games/hue-perfect" className="text-sm font-bold text-[var(--muted)] hover:text-[var(--accent)]">← Rules & info</Link>
-      <p className="text-sm font-bold text-[var(--accent)] mt-6 mb-2">🪁 Kids n Play</p>
-      <h1 className="text-3xl md:text-4xl font-black tracking-tight mb-3">🎨 Hue Perfect</h1>
-      <p className="text-[var(--muted)] mb-8">Memorise the colour. Recreate it from memory.</p>
+    <main className="max-w-2xl mx-auto p-6 md:p-10">
+      {/* Header — matches lobby style */}
+      <div className="flex flex-wrap items-baseline gap-2 sm:gap-3 mb-6 pb-4 border-b-2 border-[var(--ink)]">
+        <a href="/" className="text-3xl font-extrabold tracking-tight leading-none">
+          ZU<span className="text-[var(--accent)]">N</span>O
+        </a>
+        <span className="text-[var(--muted)] font-semibold text-sm break-words">| Hue Perfect</span>
+      </div>
 
-      <form className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 sm:p-6" onSubmit={e => {
-        e.preventDefault()
-        const playerNames = names.map((n, i) => n.trim() || `Player ${i + 1}`)
-        if (new Set(playerNames.map(n => n.toLowerCase())).size !== playerNames.length) {
-          setSetupError('Give each player a different name.'); return
-        }
-        setSetupError('')
-        startGame(playerNames)
-      }}>
-        <h2 className="text-2xl font-black mb-5">Set up game</h2>
+      {/* Kids n Play banner */}
+      <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4 mb-6 flex items-center justify-between gap-4">
+        <div>
+          <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Kids n Play</p>
+          <p className="text-sm font-semibold mt-1">Add every player below on this device — no code needed.</p>
+        </div>
+        <span className="text-4xl">🎨</span>
+      </div>
 
-        <fieldset className="mb-5">
-          <legend className="text-sm font-bold mb-3">Who&apos;s playing? (1–8)</legend>
-          <div className="space-y-3">
-            {names.map((name, i) => (
-              <div key={i} className="flex items-end gap-2">
-                <label className="flex-1 min-w-0 text-sm font-bold">
-                  Player {i + 1}
-                  <input value={name} maxLength={24} placeholder={`Player ${i + 1}`}
-                    onChange={e => { setNames(names.map((v, j) => j === i ? e.target.value : v)); setSetupError('') }}
-                    className="block w-full mt-1 rounded-xl border border-[var(--border)] bg-[var(--surface2)] p-3 text-base focus:outline-none focus:ring-2 focus:ring-[var(--accent)]" />
-                </label>
-                {names.length > 1 && (
-                  <button type="button" aria-label={`Remove player ${i + 1}`}
-                    onClick={() => { setNames(names.filter((_, j) => j !== i)); setSetupError('') }}
-                    className={`${btn} bg-[var(--surface2)]`}>×</button>
-                )}
-              </div>
-            ))}
+      {/* Two-column grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+        {/* Add Player */}
+        <div className="bg-white border-2 border-[var(--border)] rounded-xl p-5">
+          <h2 className="text-lg font-extrabold mb-4">Add Player</h2>
+          <div className="flex flex-col gap-3">
+            <input
+              type="text"
+              placeholder="Player name…"
+              value={inputName}
+              maxLength={24}
+              onChange={e => { setInputName(e.target.value); setAddError('') }}
+              onKeyDown={e => e.key === 'Enter' && handleAdd()}
+              className="p-3 border-2 border-[var(--border)] rounded-xl bg-[var(--paper)] font-semibold outline-none focus:border-[var(--accent)] transition-colors"
+            />
+            <button
+              type="button"
+              onClick={handleAdd}
+              disabled={!inputName.trim() || pendingPlayers.length >= 8}
+              className="bg-[#16a34a] text-white py-3 rounded-xl font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_2px_0_#166534]"
+            >
+              Add Player
+            </button>
+            {addError && <p className="text-xs font-bold text-[#dc2626] text-center">{addError}</p>}
           </div>
-          {names.length < 8 && (
-            <button type="button" onClick={() => setNames([...names, ''])}
-              className={`${btn} border border-[var(--border)] mt-3`}>+ Add player</button>
-          )}
-        </fieldset>
+        </div>
 
-        <fieldset className="mb-5">
-          <legend className="text-sm font-bold mb-3">Rounds</legend>
-          <div className="flex gap-2 flex-wrap">
+        {/* Players + config + start */}
+        <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-5">
+          <h2 className="text-lg font-extrabold mb-4">
+            Players{' '}
+            <span className="text-[var(--muted)] font-semibold text-base">({pendingPlayers.length})</span>
+          </h2>
+          {pendingPlayers.length === 0 ? (
+            <p className="text-sm text-[var(--muted)] font-semibold mb-4">No players yet…</p>
+          ) : (
+            <ul className="space-y-2 mb-4">
+              {pendingPlayers.map((name, i) => (
+                <li key={i} className="flex items-center justify-between gap-2 font-bold bg-white border-2 border-[var(--border)] rounded-lg px-3 py-2">
+                  <span className="flex items-center gap-2 truncate"><span>👤</span> {name}</span>
+                  <button type="button" aria-label={`Remove ${name}`}
+                    onClick={() => setPendingPlayers(pendingPlayers.filter((_, j) => j !== i))}
+                    className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-[var(--muted)] hover:bg-red-100 hover:text-red-600 transition-colors text-lg leading-none">
+                    ×
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          {/* Rounds */}
+          <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-2">Rounds</p>
+          <div className="flex gap-2 mb-4">
             {ROUNDS_OPTIONS.map(r => (
               <button key={r} type="button" onClick={() => setTotalRounds(r)}
-                className={`${btn} border ${totalRounds === r ? 'bg-[var(--accent)] text-white border-[var(--accent)]' : 'border-[var(--border)]'}`}>
+                className={`px-4 py-2 rounded-lg font-bold border text-sm ${totalRounds === r ? 'bg-[var(--accent)] text-white border-[var(--accent)]' : 'bg-white border-[var(--border)]'}`}>
                 {r}
               </button>
             ))}
           </div>
-        </fieldset>
 
-        <fieldset className="mb-6">
-          <legend className="text-sm font-bold mb-3">Memorise time</legend>
-          <div className="flex gap-2 flex-wrap">
+          {/* Memorise time */}
+          <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-2">Memorise time</p>
+          <div className="flex gap-2 flex-wrap mb-5">
             {(['easy', 'medium', 'hard'] as Difficulty[]).map(d => (
               <button key={d} type="button" onClick={() => setDifficulty(d)}
-                className={`${btn} border ${difficulty === d ? 'bg-[var(--accent)] text-white border-[var(--accent)]' : 'border-[var(--border)]'}`}>
+                className={`px-3 py-2 rounded-lg font-bold border text-sm ${difficulty === d ? 'bg-[var(--accent)] text-white border-[var(--accent)]' : 'bg-white border-[var(--border)]'}`}>
                 {d.charAt(0).toUpperCase() + d.slice(1)} ({MEMORIZE_SECS[d]}s)
               </button>
             ))}
           </div>
-        </fieldset>
 
-        {setupError && <p role="alert" className="text-red-500 text-sm mb-4">{setupError}</p>}
-        <button type="submit" className={`${btn} bg-[var(--accent)] text-white`}>Start game →</button>
-      </form>
+          <button
+            onClick={() => pendingPlayers.length > 0 && startGame(pendingPlayers)}
+            disabled={pendingPlayers.length === 0}
+            className="w-full bg-[var(--accent)] text-white py-3 rounded-xl font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_2px_0_#b83208]"
+          >
+            Start Game →
+          </button>
+        </div>
+      </div>
+
+      <p className="text-center text-xs text-[var(--muted)] font-semibold mt-6">
+        Add everyone playing on this device, then hit Start Game.
+      </p>
     </main>
   )
 
@@ -421,7 +467,7 @@ export default function HuePerfectBoard() {
 
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <button onClick={playAgain} className={`${btn} bg-[var(--accent)] text-white`}>Play again</button>
-          <button onClick={() => { clearTimer(); setPhase('setup'); setNames(['']) }}
+          <button onClick={() => { clearTimer(); setPhase('setup'); setPendingPlayers([]); setInputName('') }}
             className={`${btn} border border-[var(--border)]`}>Change settings</button>
         </div>
       </main>
