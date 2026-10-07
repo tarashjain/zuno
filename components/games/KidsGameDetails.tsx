@@ -12,7 +12,7 @@ export default function KidsGameDetails({ game }: { game: KidsGame }) {
         <p className="text-lg text-[var(--muted)]">{game.description}</p>
       </div>
       <div className="bg-[var(--surface2)] border border-[var(--border)] rounded-2xl p-5 mb-8">
-        <p className="font-bold mb-2">2–8 players · One device · Play together in person</p>
+        <p className="font-bold mb-2">1–8 players · One device · Play together in person</p>
         <p className="text-sm text-[var(--muted)] mb-5">Read the questions aloud and let the group judge each answer. No sign-in needed. Your game stays on this device; refreshing starts over.</p>
         <Link href={`/games/${game.slug}/play`} className="inline-block px-6 py-3 bg-[var(--accent)] text-white font-bold rounded-xl hover:brightness-110">Play locally →</Link>
       </div>

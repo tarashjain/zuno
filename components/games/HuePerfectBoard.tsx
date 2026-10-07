@@ -88,7 +88,6 @@ export default function HuePerfectBoard() {
   const [target, setTarget] = useState({ h: 0, s: 50, v: 50 })
   const [guess, setGuess] = useState(DEFAULT_GUESS)
   const [countdown, setCountdown] = useState(5)
-  const [lastDelta, setLastDelta] = useState(0)
   const [lastRoundScore, setLastRoundScore] = useState(0)
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -135,7 +134,6 @@ export default function HuePerfectBoard() {
   function submitGuess() {
     const de = colorDistance(target.h, target.s, target.v, guess.h, guess.s, guess.v)
     const roundScore = toScore(de)
-    setLastDelta(de)
     setLastRoundScore(roundScore)
     setScores(prev => prev.map((s, i) => i === currentPlayer ? s + roundScore : s))
     setPhase('result')
@@ -355,9 +353,6 @@ export default function HuePerfectBoard() {
             <span className="text-3xl font-black text-[var(--accent)]">{lastRoundScore}</span>
           </div>
           <ScoreBar value={lastRoundScore} />
-          <div className="flex justify-between text-sm text-[var(--muted)] pt-1">
-            <span>Colour distance (ΔE {lastDelta.toFixed(1)})</span>
-          </div>
           {players.length > 1 && (
             <div className="flex justify-between items-center border-t border-[var(--border)] pt-3 mt-1">
               <span className="font-bold">Running total</span>
