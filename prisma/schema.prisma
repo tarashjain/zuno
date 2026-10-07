@@ -9,35 +9,65 @@ datasource db {
   directUrl = env("DATABASE_URL")
 }
 
+model User {
+  id           String   @id @default(uuid())
+  email        String   @unique
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
 model Game {
   id       Int           @id @default(autoincrement())
   name     String
   slug     String        @unique
   sessions GameSession[]
-  words    GameWord[]
 }
 
-model GameWord {
+// Bollywood Codenames — single clue words dealt onto the 5x5 grid.
+model BollywoodWord {
+  id   Int    @id @default(autoincrement())
+  word String @unique
+}
+
+// 5 Second Rule — category prompts, e.g. "Name 3 things that are silent".
+model FiveSecondRuleCard {
+  id   Int    @id @default(autoincrement())
+  word String @unique
+}
+
+// Imposter — each round picks one pair; everyone gets `word`, the imposter gets `pairWord`.
+model ImposterPair {
   id       Int    @id @default(autoincrement())
-  gameId   Int
   word     String
-  pairWord String?
-  game     Game   @relation(fields: [gameId], references: [id], onDelete: Cascade)
+  pairWord String
+}
+
+// Wavelength — each round picks one spectrum; the psychic dials a hidden target between the two labels.
+model WavelengthSpectrum {
+  id         Int    @id @default(autoincrement())
+  leftLabel  String
+  rightLabel String
 }
 
 model GameSession {
-  id        String          @id @default(uuid())
-  gameId    Int
-  status    String          @default("lobby")
-  createdAt DateTime        @default(now())
-  game      Game            @relation(fields: [gameId], references: [id])
-  players   SessionPlayer[]
+  id         String          @id @default(uuid())
+  code       String          @unique // short join code, all-letters or all-digits (see lib/room-code.ts)
+  gameId     Int
+  status     String          @default("lobby")
+  mode       String          @default("individual") // "local" (pass-and-play, host adds everyone) or "individual" (each player joins via room code)
+  hostEmail  String?         // signed-in email of whoever created the room; only this identity may start the game
+  boardState Json?           // shared live game state (current turn, dice, grid, etc.) so every joined player sees the same game
+  secretState Json?          // server-only state for hidden roles and answers; never returned by shared board APIs
+  createdAt  DateTime        @default(now())
+  game       Game            @relation(fields: [gameId], references: [id])
+  players    SessionPlayer[]
 }
 
 model SessionPlayer {
   id        Int         @id @default(autoincrement())
   sessionId String
   guestName String
+  ready     Boolean     @default(false)
   joinedAt  DateTime    @default(now())
   session   GameSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
   scores    Score[]

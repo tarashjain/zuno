@@ -1,27 +1,46 @@
 import prisma from '@/lib/db'
-import { notFound } from 'next/navigation'
+import { notFound, redirect } from 'next/navigation'
 import FarkleBoard from '@/components/games/FarkleBoard'
 import JudgementBoard from '@/components/games/JudgementBoard'
+import HundredPointsBoard from '@/components/games/HundredPointsBoard'
 import ImposterBoard from '@/components/games/ImposterBoard'
 import BollywoodCodenames from '@/components/games/BollywoodCodenames'
+import FiveSecondRuleBoard from '@/components/games/FiveSecondRuleBoard'
+import ScorekeeperBoard from '@/components/games/ScorekeeperBoard'
+import WavelengthBoard from '@/components/games/WavelengthBoard'
+import ScrabbleBoard from '@/components/games/ScrabbleBoard'
+import { getRoomActor } from '@/lib/room-auth'
 
 export default async function PlayGame({ params }: { params: { id: string } }) {
+  const actor = await getRoomActor(params.id)
+  if (!actor.room) return notFound()
+  if (!actor.authorized) redirect(`/room/${params.id}`)
+
   const session = await prisma.gameSession.findUnique({
     where: { id: params.id },
     include: {
-      game: { include: { words: true } },
+      game: true,
       players: { include: { scores: true } },
     },
   })
 
   if (!session) return notFound()
+  if (session.status !== 'active') redirect(`/room/${params.id}`)
+
+  const words = session.game.slug === '5-second-rule'
+    ? await prisma.fiveSecondRuleCard.findMany()
+    : []
 
   const GameComponents: Record<string, React.ElementType> = {
     farkle: FarkleBoard,
-    '100-points': JudgementBoard,
+    '100-points': HundredPointsBoard,
     'judgement-card-game': JudgementBoard,
     imposter: ImposterBoard,
     'bollywood-code-names': BollywoodCodenames,
+    '5-second-rule': FiveSecondRuleBoard,
+    'score-keeper': ScorekeeperBoard,
+    'wavelength': WavelengthBoard,
+    'scrabble': ScrabbleBoard,
   }
 
   const ActiveGame = GameComponents[session.game.slug]
@@ -46,9 +65,11 @@ export default async function PlayGame({ params }: { params: { id: string } }) {
 
       {ActiveGame ? (
         <ActiveGame
-          session={session}
+          session={{ id: session.id, mode: session.mode }}
           players={session.players}
-          words={session.game.words}
+          words={words}
+          isHost={actor.isHost}
+          myPlayerId={actor.playerId}
         />
       ) : (
         <div className="text-center py-20 text-[var(--muted)] font-semibold">

@@ -1,23 +1,10 @@
 import { PrismaClient } from '@prisma/client'
+import { FIVE_SECOND_RULE_GENERAL_CARDS } from './five-second-rule-cards'
+import { BOLLYWOOD_WORDS } from './bollywood-words'
+import { IMPOSTER_PAIRS } from './imposter-pairs'
+import { WAVELENGTH_SPECTRA } from './wavelength-spectra'
 
 const prisma = new PrismaClient()
-
-const BOLLYWOOD_WORDS = [
-  "Sholay", "Amitabh", "DDLJ", "SRK", "Mumbai", "Lagaan", "Kajol", "Samosa",
-  "Rickshaw", "Dangal", "Kapoor", "Dance", "Romance", "Villain", "Hero", "Don",
-  "Chai", "Curry", "Bhai", "Devdas", "Baahubali", "Sari", "Bindi", "Gully",
-  "Khans", "Dupatta", "Baraat", "Mehendi", "Sangeet", "Train", "Switzerland",
-  "Police", "Inspector", "Thappad", "Mela", "Judwaa", "Reincarnation", "Haveli",
-  "Dhaba", "Jalebi", "Bhangra", "Garba", "Qawwali", "Pooja", "Aamir", "Salman",
-  "Kareena", "Alia", "Ranveer", "Deepika", "Priyanka",
-]
-
-const IMPOSTER_PAIRS = [
-  ["Ocean", "Lake"], ["Guitar", "Violin"], ["School", "University"],
-  ["Hospital", "Clinic"], ["Lion", "Tiger"], ["Pizza", "Burger"],
-  ["Snow", "Rain"], ["Library", "Bookstore"], ["Theater", "Cinema"],
-  ["Sofa", "Armchair"], ["Clock", "Watch"], ["Bridge", "Tunnel"], ["Mountain", "Hill"],
-]
 
 async function main() {
   // Upsert scoring games
@@ -30,28 +17,59 @@ async function main() {
   }
 
   // Imposter
-  const imposterGame = await prisma.game.upsert({
+  await prisma.game.upsert({
     where: { slug: 'imposter' },
     update: {},
     create: { name: 'Imposter', slug: 'imposter' },
   })
 
   // Bollywood Codenames
-  const bollywoodGame = await prisma.game.upsert({
+  await prisma.game.upsert({
     where: { slug: 'bollywood-code-names' },
     update: {},
     create: { name: 'Bollywood Codenames', slug: 'bollywood-code-names' },
   })
 
-  // Clear and re-seed words
-  await prisma.gameWord.deleteMany({ where: { gameId: { in: [imposterGame.id, bollywoodGame.id] } } })
-
-  await prisma.gameWord.createMany({
-    data: BOLLYWOOD_WORDS.map(word => ({ gameId: bollywoodGame.id, word })),
+  // 5 Second Rule
+  await prisma.game.upsert({
+    where: { slug: '5-second-rule' },
+    update: {},
+    create: { name: '5 Second Rule', slug: '5-second-rule' },
   })
 
-  await prisma.gameWord.createMany({
-    data: IMPOSTER_PAIRS.map(([word, pairWord]) => ({ gameId: imposterGame.id, word, pairWord })),
+  // Score Keeper (general round-by-round scorecard, no word bank needed)
+  await prisma.game.upsert({
+    where: { slug: 'score-keeper' },
+    update: {},
+    create: { name: 'Score Keeper', slug: 'score-keeper' },
+  })
+
+  // Wavelength
+  await prisma.game.upsert({
+    where: { slug: 'wavelength' },
+    update: {},
+    create: { name: 'Wavelength', slug: 'wavelength' },
+  })
+
+  // Clear and re-seed each game's own dedicated word bank
+  await prisma.fiveSecondRuleCard.deleteMany()
+  await prisma.fiveSecondRuleCard.createMany({
+    data: FIVE_SECOND_RULE_GENERAL_CARDS.map(word => ({ word })),
+  })
+
+  await prisma.bollywoodWord.deleteMany()
+  await prisma.bollywoodWord.createMany({
+    data: BOLLYWOOD_WORDS.map(word => ({ word })),
+  })
+
+  await prisma.imposterPair.deleteMany()
+  await prisma.imposterPair.createMany({
+    data: IMPOSTER_PAIRS.map(([word, pairWord]) => ({ word, pairWord })),
+  })
+
+  await prisma.wavelengthSpectrum.deleteMany()
+  await prisma.wavelengthSpectrum.createMany({
+    data: WAVELENGTH_SPECTRA.map(([leftLabel, rightLabel]) => ({ leftLabel, rightLabel })),
   })
 
   console.log('✅ Seed complete!')

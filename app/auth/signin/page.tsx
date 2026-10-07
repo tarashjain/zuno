@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useSearchParams } from 'next/navigation'
 
-export default function SignIn() {
-  const router = useRouter()
+function SignInForm() {
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -27,7 +27,10 @@ export default function SignIn() {
       if (result?.error) {
         setError('Invalid email or password')
       } else {
-        router.push('/')
+        // A full navigation (not router.push) so every server component — including the
+        // homepage hero, which reads the session on the server — re-renders with the new
+        // auth cookie instead of serving a stale, pre-sign-in Router Cache entry.
+        window.location.href = searchParams.get('callbackUrl') || '/'
       }
     } catch (err) {
       setError('An error occurred')
@@ -97,5 +100,13 @@ export default function SignIn() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function SignIn() {
+  return (
+    <Suspense fallback={null}>
+      <SignInForm />
+    </Suspense>
   )
 }

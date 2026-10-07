@@ -1,19 +1,30 @@
 import prisma from '@/lib/db'
 import { notFound, redirect } from 'next/navigation'
-import { joinSession, startSession } from '@/app/actions/score'
+import LobbyLive from '@/components/room/LobbyLive'
+import ShareCodeButtons from '@/components/room/ShareCodeButtons'
+import { getRoomActor } from '@/lib/room-auth'
 
 export default async function GameRoom({ params }: { params: { id: string } }) {
   const session = await prisma.gameSession.findUnique({
     where: { id: params.id },
-    include: { game: true, players: true },
+    include: { game: true, players: { orderBy: { joinedAt: 'asc' } } },
   })
 
   if (!session) return notFound()
 
-  // Auto-redirect if already started
-  if (session.status === 'active') redirect(`/room/${params.id}/play`)
+  const actor = await getRoomActor(params.id)
 
-  const roomCode = params.id.split('-')[0].toUpperCase()
+  // Only verified room members may enter an active game.
+  if (session.status === 'active') {
+    if (actor.authorized) redirect(`/room/${params.id}/play`)
+    return notFound()
+  }
+
+  const isLocal = session.mode === 'local'
+  const roomCode = session.code
+
+  const isHost = actor.isHost
+  const myPlayerId = actor.playerId
 
   return (
     <main className="max-w-2xl mx-auto p-6 md:p-10">
@@ -25,90 +36,43 @@ export default async function GameRoom({ params }: { params: { id: string } }) {
         <span className="text-[var(--muted)] font-semibold text-sm break-words">| {session.game.name}</span>
       </div>
 
-      {/* Room code */}
-      <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4 mb-6 flex items-center justify-between gap-4">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Room Code</p>
-          <p className="text-2xl sm:text-3xl font-extrabold tracking-widest mt-1 break-all">{roomCode}</p>
+      {/* Mode banner */}
+      {isLocal ? (
+        <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4 mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Local Game</p>
+            <p className="text-sm font-semibold mt-1">Add every player below on this device — no code needed.</p>
+          </div>
+          <span className="text-4xl">🖥️</span>
         </div>
-        <span className="text-4xl">🎮</span>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-        {/* Join form */}
-        <div className="bg-white border-2 border-[var(--border)] rounded-xl p-5">
-          <h2 className="text-lg font-extrabold mb-4">Join Game</h2>
-          <form
-            action={async (fd: FormData) => {
-              'use server'
-              const name = fd.get('guestName') as string
-              await joinSession(params.id, name)
-            }}
-            className="flex flex-col gap-3"
-          >
-            <input
-              type="text"
-              name="guestName"
-              placeholder="Your name…"
-              required
-              className="p-3 border-2 border-[var(--border)] rounded-xl bg-[var(--paper)] font-semibold outline-none focus:border-[var(--accent)] transition-colors"
-            />
-            <button
-              type="submit"
-              className="bg-[#16a34a] text-white py-3 rounded-xl font-bold hover:brightness-110 transition-all shadow-[0_2px_0_#166534]"
-            >
-              Join Lobby
-            </button>
-          </form>
+      ) : (
+        <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4 mb-6 flex items-center justify-between gap-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Room Code</p>
+            <p className="text-2xl sm:text-3xl font-extrabold tracking-widest mt-1 break-all">{roomCode}</p>
+            <p className="text-xs font-semibold text-[var(--muted)] mt-1">
+              Share this code — each player joins from their own device via Join Room.
+            </p>
+            <ShareCodeButtons code={roomCode} gameName={session.game.name} />
+          </div>
+          <span className="text-4xl">📱</span>
         </div>
+      )}
 
-        {/* Player list */}
-        <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-5">
-          <h2 className="text-lg font-extrabold mb-4">
-            Players{' '}
-            <span className="text-[var(--muted)] font-semibold text-base">
-              ({session.players.length})
-            </span>
-          </h2>
-
-          {session.players.length === 0 ? (
-            <p className="text-sm text-[var(--muted)] font-semibold">No players yet…</p>
-          ) : (
-            <ul className="space-y-2 mb-5">
-              {session.players.map((p) => (
-                <li
-                  key={p.id}
-                  className="flex items-center gap-2 font-bold bg-white border-2 border-[var(--border)] rounded-lg px-3 py-2"
-                >
-                  <span>👤</span> {p.guestName}
-                </li>
-              ))}
-            </ul>
-          )}
-
-          {session.players.length >= 1 && (
-            <form
-              action={async () => {
-                'use server'
-                await startSession(params.id)
-                redirect(`/room/${params.id}/play`)
-              }}
-            >
-              <button
-                type="submit"
-                className="w-full bg-[var(--accent)] text-white py-3 rounded-xl font-bold hover:brightness-110 transition-all shadow-[0_2px_0_#b83208]"
-              >
-                Start Game →
-              </button>
-            </form>
-          )}
+      {!isHost && (
+        <div className="bg-[var(--surface2)] border border-[var(--border)] rounded-xl p-3 mb-6 text-xs font-semibold text-[var(--muted)] text-center">
+          Only the host who created this room can start the game.
         </div>
-      </div>
+      )}
 
-      {/* Refresh hint */}
-      <p className="text-center text-xs text-[var(--muted)] font-semibold mt-6">
-        Refresh this page after others join to see them appear.
-      </p>
+      <LobbyLive
+        sessionId={params.id}
+        mode={session.mode}
+        isHost={isHost}
+        initialStatus={session.status}
+        initialPlayers={session.players.map(p => ({ id: p.id, guestName: p.guestName, ready: p.ready }))}
+        initialMyPlayerId={myPlayerId}
+      />
     </main>
   )
 }

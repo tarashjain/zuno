@@ -27,6 +27,9 @@ const CATEGORIES = [
     games: [
       { name: 'Imposter',            slug: 'imposter',             desc: 'Find the imposter' },
       { name: 'Bollywood Codenames', slug: 'bollywood-code-names', desc: 'Bollywood spy words' },
+      { name: '5 Second Rule',       slug: '5-second-rule',        desc: 'Name 3 before time runs out' },
+      { name: 'Wavelength',          slug: 'wavelength',           desc: 'Mind-reading on a shifting spectrum' },
+      { name: 'Scrabble',            slug: 'scrabble',             desc: 'Classic word-tile board game' },
     ],
   },
   {
@@ -130,10 +133,25 @@ export default function Navbar() {
               )}
             </div>
           ))}
+          <div className="ml-3">
+            <Link
+              href="/games/score-keeper"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface2)] transition-colors"
+            >
+              <span>📝</span>
+              <span>Score Keeper</span>
+            </Link>
+          </div>
         </div>
 
         {/* Desktop right side */}
         <div className="hidden xl:flex items-center gap-3 ml-auto">
+          <Link
+            href="/join"
+            className="flex items-center gap-1.5 text-sm font-bold bg-[var(--surface2)] border border-[var(--border)] px-3 py-2 rounded-xl hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+          >
+            🔑 Join Room
+          </Link>
           {session ? (
             <>
               <Link
@@ -179,8 +197,14 @@ export default function Navbar() {
           )}
         </div>
 
-        {/* Mobile right: auth shortcut + hamburger */}
+        {/* Mobile right: join shortcut + auth shortcut + hamburger */}
         <div className="flex xl:hidden items-center gap-2 ml-auto">
+          <Link
+            href="/join"
+            className="text-sm font-bold text-[var(--accent)]"
+          >
+            🔑 Join
+          </Link>
           {!session && (
             <Link href="/auth/signin" className="text-sm font-bold text-[var(--accent)]">
               Sign in
@@ -247,6 +271,15 @@ export default function Navbar() {
               )}
             </div>
           ))}
+
+          <div className="mt-2">
+            <Link
+              href="/games/score-keeper"
+              className="flex items-center gap-2 px-3 py-3 rounded-xl hover:bg-[var(--surface2)] font-semibold transition-colors"
+            >
+              📝 Score Keeper
+            </Link>
+          </div>
 
           <div className="border-t border-[var(--border)] my-3" />
 

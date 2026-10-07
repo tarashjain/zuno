@@ -1,7 +1,6 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
-import prisma from '@/lib/db'
 import { getKidsGame } from '@/lib/kids-games'
 import KidsGameDetails from '@/components/games/KidsGameDetails'
 
@@ -20,22 +19,24 @@ const GAME_INFO: Record<string, { name: string; emoji: string; description: stri
   'judgement-card-game': {
     name: 'Judgement',
     emoji: '🃏',
-    description: 'Bid the number of tricks you think you can win and try to hit it exactly!',
+    description: 'Predict how many tricks you will win, then try to hit that number exactly.',
     rules: [
-      'Each round, players bid how many tricks they will win',
-      'Points awarded only if you hit your bid exactly',
-      'Over or under your bid = 0 points for the round',
-      'Play until agreed number of rounds is complete',
+      'Each round, every player predicts how many tricks they will win.',
+      'Success: if a player wins exactly their predicted number of tricks, they score 10 points plus the number of tricks won.',
+      'Failure: if a player wins more or fewer tricks than predicted, they score 0 points for that round.',
+      'Zero bid rule: if a player correctly predicts zero tricks and wins zero tricks, they score 10 points.',
+      'Play until the agreed number of rounds is complete.',
     ],
   },
   '100-points': {
     name: '100 Points',
     emoji: '💯',
-    description: 'A simplified bidding card game where you aim to score exactly your bid.',
+    description: 'A simple round-based score tracker — cross 100 points and you\'re out.',
     rules: [
-      'Players bid points at the start of each round',
-      'Win tricks and score based on bid and achievement',
-      'First player to 1000 points wins',
+      'Play whatever card game (or other scoring game) your group likes off-app — this just tracks the running totals and eliminations.',
+      'Each round, every player enters their own points for that round, which are added to their running total.',
+      'Once a player\'s running total reaches 100 or more, they\'re eliminated.',
+      'Play continues, round after round, until only one player is left standing — they win.',
     ],
   },
   imposter: {
@@ -58,6 +59,57 @@ const GAME_INFO: Record<string, { name: string; emoji: string; description: stri
       'Clues must be one word and cannot be part of the target word',
       'Team guesses based on your clue and number',
       'First team to guess all their words wins',
+    ],
+  },
+  '5-second-rule': {
+    name: '5 Second Rule',
+    emoji: '⏱️',
+    description: 'Name 3 things in a category before the 5-second timer runs out!',
+    rules: [
+      'One player sits in the "Hot Seat" for each round',
+      'Tap Start to reveal a category card, e.g. "Name 3 breakfast foods"',
+      'The Hot Seat player has 5 seconds to name 3 things that fit',
+      'Say all 3 before time runs out to score a point; the group judges each answer',
+      'The Hot Seat passes to the next player each round — most points after the agreed rounds wins',
+    ],
+  },
+  wavelength: {
+    name: 'Wavelength',
+    emoji: '📡',
+    description: 'A social guessing game where teams try to read each other’s minds on a shifting spectrum.',
+    rules: [
+      'Split players into two teams. One player is the Psychic each round (the clue giver).',
+      'The Psychic chooses a spectrum from the card and secretly spins the dial to set a hidden target along that spectrum.',
+      'Give a single creative clue (one word or short concept) corresponding to where the target lies.',
+      'Teammates discuss and set the pointer where they think the target is; then the Psychic reveals the hidden target zone.',
+      'Scoring: Bullseye (center) = 4 points, Middle ring = 3 points, Outer ring = 2 points. The opposing team may guess Left/Right for +1 bonus point.',
+      'Alternate turns; first team to reach 10 points wins.',
+    ],
+  },
+  scrabble: {
+    name: 'Scrabble',
+    emoji: '🔤',
+    description: 'The classic word-tile board game — build words, rack up points, outscore everyone.',
+    rules: [
+      '2–4 players. Everyone draws 7 tiles from the bag to start.',
+      'The first word must be placed across the center star square.',
+      'Every word after that must connect to a tile already on the board, in one straight line with no gaps.',
+      'Scoring is automatic — letter values, double/triple letter squares, and double/triple word squares are all calculated for you, including any word formed crosswise. Placing all 7 tiles in one turn earns a 50-point bonus.',
+      'On your turn you may play a word, exchange any of your tiles for new ones (only when at least 7 tiles remain in the bag), or pass.',
+      'Word legality is on the honor system — like a physical set, there\'s no dictionary check, so the group polices what counts as a real word.',
+      'The game ends when the bag is empty and someone plays their last tile, or when every player passes in a row. Remaining tiles are subtracted from each player\'s score; if someone went out, they collect everyone else\'s leftover tile value as a bonus.',
+      'Highest final score wins.',
+    ],
+  },
+  'score-keeper': {
+    name: 'Score Keeper',
+    emoji: '📝',
+    description: 'A general-purpose scorecard — add players, play any game you like, and track the running total.',
+    rules: [
+      'Add players from the lobby before starting, same as any other game here',
+      'Each round, enter every player’s score for that round (negative numbers are fine)',
+      'Tap Complete Round to save it — everyone’s running total updates automatically',
+      'Keep playing rounds for whatever game you’re scoring — the leaderboard always shows the current totals',
     ],
   },
 }
@@ -84,8 +136,6 @@ export default async function GamePage({ params }: PageProps) {
     )
   }
 
-  const game = await prisma.game.findUnique({ where: { slug: params.slug } })
-
   return (
     <div className="max-w-4xl mx-auto px-4 py-10 md:py-16">
       {/* Game header */}
@@ -101,12 +151,20 @@ export default async function GamePage({ params }: PageProps) {
         {/* Action buttons */}
         <div className="flex gap-3 flex-wrap">
           {session ? (
-            <Link
-              href={`/room/new?game=${params.slug}`}
-              className="px-6 py-3 bg-[var(--accent)] text-white font-bold rounded-lg hover:brightness-110 transition-all"
-            >
-              Start New Game
-            </Link>
+            <>
+              <Link
+                href={`/room/new?game=${params.slug}&mode=local`}
+                className="px-6 py-3 bg-[var(--accent)] text-white font-bold rounded-lg hover:brightness-110 transition-all"
+              >
+                🖥️ New Local Game
+              </Link>
+              <Link
+                href={`/room/new?game=${params.slug}&mode=individual`}
+                className="px-6 py-3 bg-[var(--surface2)] text-[var(--text)] font-bold rounded-lg border border-[var(--border)] hover:border-[var(--accent)] transition-all"
+              >
+                📱 New Room (Share Code)
+              </Link>
+            </>
           ) : (
             <Link
               href="/auth/signin"
@@ -120,6 +178,24 @@ export default async function GamePage({ params }: PageProps) {
             className="px-6 py-3 bg-[var(--surface2)] text-[var(--text)] font-bold rounded-lg border border-[var(--border)] hover:border-[var(--accent)] transition-all"
           >
             ← Back
+          </Link>
+        </div>
+
+        {session && (
+          <p className="text-xs text-[var(--muted)] font-semibold mt-3">
+            Both buttons above start a brand new game. <strong>Local</strong>: one device, add every player yourself, no room code needed. <strong>Individually</strong>: share a room code and each player joins from their own device.
+          </p>
+        )}
+
+        <div className="mt-4 bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm font-semibold text-[var(--muted)]">
+            Already have a room code from someone else?
+          </p>
+          <Link
+            href="/join"
+            className="px-4 py-2 bg-white border-2 border-[var(--border)] rounded-lg font-bold text-sm hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
+          >
+            🔑 Join That Room →
           </Link>
         </div>
       </div>
@@ -139,24 +215,6 @@ export default async function GamePage({ params }: PageProps) {
             ))}
           </div>
         </div>
-
-        {/* Game stats if available */}
-        {game && (
-          <div className="grid grid-cols-3 gap-4 border-t border-[var(--border)] pt-8">
-            <div className="p-4 bg-[var(--surface)] rounded-lg">
-              <div className="text-2xl font-black text-[var(--accent)]">{game.id}</div>
-              <div className="text-xs text-[var(--muted)] uppercase font-bold mt-1">Game ID</div>
-            </div>
-            <div className="p-4 bg-[var(--surface)] rounded-lg">
-              <div className="text-2xl font-black">0</div>
-              <div className="text-xs text-[var(--muted)] uppercase font-bold mt-1">Sessions</div>
-            </div>
-            <div className="p-4 bg-[var(--surface)] rounded-lg">
-              <div className="text-2xl font-black">0</div>
-              <div className="text-xs text-[var(--muted)] uppercase font-bold mt-1">Players</div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   )

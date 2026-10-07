@@ -3,10 +3,8 @@
 import { useState } from 'react'
 import { signIn } from 'next-auth/react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 
 export default function Register() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [error, setError] = useState('')
@@ -18,7 +16,18 @@ export default function Register() {
     setLoading(true)
 
     try {
-      // For now, just sign in with credentials (no actual registration backend)
+      const response = await fetch('/api/auth/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      })
+      const registration = await response.json()
+
+      if (!response.ok) {
+        setError(registration.error ?? 'Failed to create account')
+        return
+      }
+
       const result = await signIn('credentials', {
         email,
         password,
@@ -28,7 +37,9 @@ export default function Register() {
       if (result?.error) {
         setError('Failed to create account')
       } else {
-        router.push('/')
+        // Full navigation so server components (e.g. the homepage hero) re-render with
+        // the new auth cookie instead of a stale, pre-sign-in Router Cache entry.
+        window.location.href = '/'
       }
     } catch (err) {
       setError('An error occurred')
@@ -69,6 +80,7 @@ export default function Register() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••"
+              minLength={8}
               className="w-full px-4 py-2.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-sm focus:outline-none focus:border-[var(--accent)] transition-colors"
               required
             />

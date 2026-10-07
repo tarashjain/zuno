@@ -1,6 +1,7 @@
 'use client'
 import { useState } from 'react'
 import { submitScore } from '@/app/actions/score'
+import { useLiveBoard } from '@/components/room/useLiveBoard'
 
 type Player = { id: number; guestName: string; scores: { points: number; round: number; notes?: string | null }[] }
 type Session = { id: string }
@@ -10,6 +11,10 @@ type TurnState = {
   selected: number[]
   turnPoints: number
   hasRolled: boolean
+}
+type FarkleState = {
+  round: number
+  turns: Record<number, TurnState>
 }
 
 const DICE_COUNT = 6
@@ -22,6 +27,8 @@ const emptyTurn = (): TurnState => ({
   turnPoints: 0,
   hasRolled: false,
 })
+
+const DEFAULT_STATE: FarkleState = { round: 1, turns: {} }
 
 function scoreDice(values: number[]): { score: number; valid: boolean; label: string } {
   if (values.length === 0) return { score: 0, valid: false, label: 'No dice selected' }
@@ -86,9 +93,11 @@ function hasAnyScore(values: number[]) {
 }
 
 export default function FarkleBoard({ session, players: initialPlayers }: { session: Session; players: Player[] }) {
-  const [players, setPlayers] = useState(initialPlayers)
-  const [round, setRound] = useState(1)
-  const [turns, setTurns] = useState<Record<number, TurnState>>({})
+  const { boardState, setBoardState, players, setPlayers } = useLiveBoard<FarkleState, Player>(
+    session.id,
+    DEFAULT_STATE,
+    initialPlayers
+  )
   const [loading, setLoading] = useState<Record<number, boolean>>({})
   const [toast, setToast] = useState<string | null>(null)
 
@@ -98,17 +107,20 @@ export default function FarkleBoard({ session, players: initialPlayers }: { sess
   }
 
   const total = (p: Player) => p.scores.reduce((s, x) => s + x.points, 0)
-  const getTurn = (playerId: number) => turns[playerId] ?? emptyTurn()
+  const getTurn = (playerId: number) => boardState.turns[playerId] ?? emptyTurn()
 
-  const setTurn = (playerId: number, updater: (turn: TurnState) => TurnState) => {
-    setTurns(current => ({ ...current, [playerId]: updater(current[playerId] ?? emptyTurn()) }))
+  const updateTurn = (playerId: number, updater: (turn: TurnState) => TurnState) => {
+    setBoardState({
+      ...boardState,
+      turns: { ...boardState.turns, [playerId]: updater(getTurn(playerId)) },
+    })
   }
 
   const roll = (playerId: number) => {
     const turn = getTurn(playerId)
     const dice = makeDice(turn.dice.length || DICE_COUNT)
 
-    setTurn(playerId, current => ({
+    updateTurn(playerId, current => ({
       ...current,
       dice,
       selected: [],
@@ -121,7 +133,7 @@ export default function FarkleBoard({ session, players: initialPlayers }: { sess
   }
 
   const toggleDie = (playerId: number, dieId: number) => {
-    setTurn(playerId, turn => ({
+    updateTurn(playerId, turn => ({
       ...turn,
       selected: turn.selected.includes(dieId)
         ? turn.selected.filter(id => id !== dieId)
@@ -140,7 +152,7 @@ export default function FarkleBoard({ session, players: initialPlayers }: { sess
     }
 
     const remaining = turn.dice.filter(d => !turn.selected.includes(d.id))
-    setTurn(playerId, current => ({
+    updateTurn(playerId, current => ({
       ...current,
       dice: remaining.length > 0 ? remaining : [],
       selected: [],
@@ -158,20 +170,20 @@ export default function FarkleBoard({ session, players: initialPlayers }: { sess
     }
 
     setLoading(l => ({ ...l, [playerId]: true }))
-    await submitScore(session.id, playerId, turn.turnPoints, round, 'Banked Farkle turn')
-    setPlayers(pl => pl.map(p => p.id === playerId
-      ? { ...p, scores: [...p.scores, { points: turn.turnPoints, round, notes: 'Banked Farkle turn' }] } : p))
-    setTurns(current => ({ ...current, [playerId]: emptyTurn() }))
+    await submitScore(session.id, playerId, turn.turnPoints, boardState.round, 'Banked Farkle turn')
+    setPlayers(players.map(p => p.id === playerId
+      ? { ...p, scores: [...p.scores, { points: turn.turnPoints, round: boardState.round, notes: 'Banked Farkle turn' }] } : p))
+    setBoardState({ ...boardState, turns: { ...boardState.turns, [playerId]: emptyTurn() } })
     setLoading(l => ({ ...l, [playerId]: false }))
     showToast(`+${turn.turnPoints} banked`)
   }
 
   const farkle = async (playerId: number) => {
     setLoading(l => ({ ...l, [playerId]: true }))
-    await submitScore(session.id, playerId, 0, round, 'Farkled')
-    setPlayers(pl => pl.map(p => p.id === playerId
-      ? { ...p, scores: [...p.scores, { points: 0, round, notes: 'Farkled' }] } : p))
-    setTurns(current => ({ ...current, [playerId]: emptyTurn() }))
+    await submitScore(session.id, playerId, 0, boardState.round, 'Farkled')
+    setPlayers(players.map(p => p.id === playerId
+      ? { ...p, scores: [...p.scores, { points: 0, round: boardState.round, notes: 'Farkled' }] } : p))
+    setBoardState({ ...boardState, turns: { ...boardState.turns, [playerId]: emptyTurn() } })
     setLoading(l => ({ ...l, [playerId]: false }))
     showToast('Farkle recorded')
   }
@@ -191,7 +203,7 @@ export default function FarkleBoard({ session, players: initialPlayers }: { sess
       </div>
 
       <div className="inline-flex items-center gap-2 bg-[var(--ink)] text-[var(--paper)] text-xs font-bold tracking-widest uppercase px-4 py-2 rounded-full mb-5">
-        Farkle Round {round}
+        Farkle Round {boardState.round}
       </div>
 
       <div className="bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4 mb-5 text-xs sm:text-sm font-semibold text-[var(--muted)]">
@@ -283,9 +295,9 @@ export default function FarkleBoard({ session, players: initialPlayers }: { sess
                 </button>
               </div>
 
-              {p.scores.filter(s => s.round === round - 1).length > 0 && (
+              {p.scores.filter(s => s.round === boardState.round - 1).length > 0 && (
                 <div className="mt-3 text-xs text-[var(--muted)] font-semibold">
-                  Last round: {p.scores.filter(s => s.round === round - 1).reduce((s, x) => s + x.points, 0)} pts
+                  Last round: {p.scores.filter(s => s.round === boardState.round - 1).reduce((s, x) => s + x.points, 0)} pts
                 </div>
               )}
             </div>
@@ -294,7 +306,7 @@ export default function FarkleBoard({ session, players: initialPlayers }: { sess
       </div>
 
       <button
-        onClick={() => setRound(r => r + 1)}
+        onClick={() => setBoardState({ ...boardState, round: boardState.round + 1 })}
         className="w-full py-3 bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl font-bold hover:border-[var(--ink)] transition-colors"
       >
         Next Round
