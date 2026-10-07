@@ -98,7 +98,7 @@ export default function KidsPlayBoard({ game }: { game: KidsGame }) {
           {error && <p role="alert" className="text-[var(--red)] text-sm mt-4">{error}</p>}
           <div className="flex flex-wrap gap-3 mt-6">
             <button type="button" disabled={names.length >= 8} onClick={() => setNames([...names, ''])} className={`${button} border border-[var(--border)] disabled:opacity-40`}>+ Add player</button>
-            <button type="submit" className={`${button} bg-[var(--accent)] text-white`}>Start game →</button>
+            <button type="submit" className={`${button} bg-[var(--accent)] text-white`}>Start Game →</button>
           </div>
         </form>
       ) : (
