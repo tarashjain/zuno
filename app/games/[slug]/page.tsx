@@ -1,8 +1,9 @@
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
-import { redirect } from 'next/navigation'
 import prisma from '@/lib/db'
+import { getKidsGame } from '@/lib/kids-games'
+import KidsGameDetails from '@/components/games/KidsGameDetails'
 
 const GAME_INFO: Record<string, { name: string; emoji: string; description: string; rules: string[] }> = {
   farkle: {
@@ -66,6 +67,9 @@ interface PageProps {
 }
 
 export default async function GamePage({ params }: PageProps) {
+  const localGame = getKidsGame(params.slug)
+  if (localGame) return <KidsGameDetails game={localGame} />
+
   const session = await getServerSession(authOptions)
   const gameInfo = GAME_INFO[params.slug]
 

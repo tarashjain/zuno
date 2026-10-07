@@ -9,6 +9,12 @@ A Next.js 14 party game scorekeeper with Neon (PostgreSQL) database, deployable 
 - 💯 **100 Points** — Bid & win tricks variant
 - 🕵️ **Imposter** — Find the imposter word game
 - 🎬 **Bollywood Codenames** — Bollywood-themed word spy game
+- 🤐 **Don’t Say Yes or No** — Kids n Play: answer aloud without saying either word
+- 🙃 **Wrong Answers Only** — Kids n Play: give silly, incorrect answers to stay in
+
+Kids n Play games are local only: 2–8 players share one device, with question prompts,
+turns, elimination, and a winner. No sign-in or database seed is needed for these games.
+Game progress stays in browser memory and resets when you leave or refresh the page.
 
 ---
 

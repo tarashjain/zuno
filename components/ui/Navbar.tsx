@@ -3,6 +3,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useSession, signOut } from 'next-auth/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
+import { KIDS_GAMES } from '@/lib/kids-games'
 
 const CATEGORIES = [
   {
@@ -27,6 +28,11 @@ const CATEGORIES = [
       { name: 'Imposter',            slug: 'imposter',             desc: 'Find the imposter' },
       { name: 'Bollywood Codenames', slug: 'bollywood-code-names', desc: 'Bollywood spy words' },
     ],
+  },
+  {
+    label: 'Kids n Play',
+    emoji: '🪁',
+    games: KIDS_GAMES.map(game => ({ name: game.name, slug: game.slug, desc: 'Local only · Play together in person' })),
   },
 ]
 
@@ -99,7 +105,7 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop category nav */}
-        <div className="hidden md:flex items-center gap-1 flex-1">
+        <div className="hidden xl:flex items-center gap-1 flex-1">
           {CATEGORIES.map((cat) => (
             <div key={cat.label} className="relative">
               <button
@@ -127,7 +133,7 @@ export default function Navbar() {
         </div>
 
         {/* Desktop right side */}
-        <div className="hidden md:flex items-center gap-3 ml-auto">
+        <div className="hidden xl:flex items-center gap-3 ml-auto">
           {session ? (
             <>
               <Link
@@ -174,7 +180,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile right: auth shortcut + hamburger */}
-        <div className="flex md:hidden items-center gap-2 ml-auto">
+        <div className="flex xl:hidden items-center gap-2 ml-auto">
           {!session && (
             <Link href="/auth/signin" className="text-sm font-bold text-[var(--accent)]">
               Sign in
@@ -195,14 +201,14 @@ export default function Navbar() {
       {/* Mobile drawer overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-30 md:hidden"
+          className="fixed inset-0 bg-black/60 z-30 xl:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Mobile drawer */}
       <div
-        className={`fixed top-16 right-0 h-[calc(100vh-64px)] w-80 max-w-[90vw] bg-[var(--surface)] shadow-2xl border-l border-[var(--border)] z-40 md:hidden transition-transform duration-300 ease-out overflow-y-auto
+        className={`fixed top-16 right-0 h-[calc(100vh-64px)] w-80 max-w-[90vw] bg-[var(--surface)] shadow-2xl border-l border-[var(--border)] z-40 xl:hidden transition-transform duration-300 ease-out overflow-y-auto
           ${mobileOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="p-4 space-y-1">

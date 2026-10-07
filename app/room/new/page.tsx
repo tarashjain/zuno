@@ -1,5 +1,6 @@
 import prisma from '@/lib/db'
 import { redirect } from 'next/navigation'
+import { getKidsGame } from '@/lib/kids-games'
 
 const GAME_NAMES: Record<string, string> = {
   farkle: 'Farkle',
@@ -15,6 +16,10 @@ export default async function NewRoom({
   searchParams: { game?: string }
 }) {
   const gameSlug = searchParams.game
+
+  if (gameSlug && getKidsGame(gameSlug)) {
+    redirect(`/games/${gameSlug}/play`)
+  }
 
   if (!gameSlug || !GAME_NAMES[gameSlug]) {
     redirect('/')
