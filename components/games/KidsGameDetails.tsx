@@ -3,39 +3,67 @@ import type { KidsGame } from '@/lib/kids-games'
 
 export default function KidsGameDetails({ game }: { game: KidsGame }) {
   return (
-    <main className="max-w-3xl mx-auto px-4 py-10 md:py-16">
-      <Link href="/" className="text-sm font-bold text-[var(--muted)] hover:text-[var(--accent)]">← Back to games</Link>
-      <div className="mt-8 mb-8">
-        <p className="text-sm font-bold text-[var(--accent)] mb-4">🪁 Kids n Play · Local only</p>
-        <span className="text-5xl" aria-hidden="true">{game.emoji}</span>
-        <h1 className="text-4xl md:text-5xl font-black tracking-tight mt-4 mb-3">{game.name}</h1>
-        <p className="text-lg text-[var(--muted)]">{game.description}</p>
-      </div>
-      <div className="bg-[var(--surface2)] border border-[var(--border)] rounded-2xl p-5 mb-8">
-        <p className="font-bold mb-2">1–8 players · One device · Play together in person</p>
-        <p className="text-sm text-[var(--muted)] mb-5">No sign-in needed. Your game stays on this device; refreshing starts over.</p>
+    <div className="max-w-4xl mx-auto px-4 py-10 md:py-16">
+      <div className="mb-10">
+        <div className="flex items-center gap-4 mb-6">
+          <span className="text-5xl">{game.emoji}</span>
+          <div>
+            <p className="text-sm font-bold text-[var(--accent)] mb-1">🪁 Kids n Play</p>
+            <h1 className="text-4xl md:text-5xl font-black tracking-tighter">{game.name}</h1>
+            <p className="text-[var(--muted)] text-lg mt-2">{game.description}</p>
+          </div>
+        </div>
+
         <div className="flex gap-3 flex-wrap">
-          <Link href={`/games/${game.slug}/play`} className="px-6 py-3 bg-[var(--accent)] text-white font-bold rounded-xl hover:brightness-110">New Game</Link>
-          <Link href="/" className="px-6 py-3 bg-[var(--surface)] border border-[var(--border)] font-bold rounded-xl hover:border-[var(--accent)] transition-all">Back</Link>
+          <Link
+            href={`/games/${game.slug}/play`}
+            className="px-6 py-3 bg-[var(--accent)] text-white font-bold rounded-lg hover:brightness-110 transition-all"
+          >
+            New Game
+          </Link>
+          <Link
+            href="/"
+            className="px-6 py-3 bg-[var(--surface2)] text-[var(--text)] font-bold rounded-lg border border-[var(--border)] hover:border-[var(--accent)] transition-all"
+          >
+            Back
+          </Link>
         </div>
       </div>
-      <h2 className="text-2xl font-black mb-4">How to Play</h2>
-      <ol className="list-decimal pl-6 space-y-3 mb-8">
-        {game.rules.map(rule => <li key={rule} className="pl-2 leading-relaxed">{rule}</li>)}
-      </ol>
-      {game.examples.length > 0 && (
-        <section className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5">
-          <h2 className="text-xl font-black mb-4">Try it like this</h2>
-          <ul className="space-y-4">
-            {game.examples.map(example => (
-              <li key={example.question}>
-                <p className="font-semibold">{example.question}</p>
-                <p className="text-[var(--accent)] font-bold mt-1">→ {example.answer}</p>
-              </li>
+
+      <div className="space-y-8">
+        <div>
+          <h2 className="text-2xl font-black mb-4">How to Play</h2>
+          <div className="space-y-3">
+            {game.rules.map((rule, idx) => (
+              <div key={idx} className="flex gap-3">
+                <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--accent)] text-white flex items-center justify-center font-bold text-sm">
+                  {idx + 1}
+                </div>
+                <p className="text-[var(--text)] leading-relaxed pt-1">{rule}</p>
+              </div>
             ))}
-          </ul>
-        </section>
-      )}
-    </main>
+          </div>
+        </div>
+
+        {game.examples.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-black mb-4">Try it like this</h2>
+            <div className="space-y-3">
+              {game.examples.map((example, idx) => (
+                <div key={idx} className="flex gap-3">
+                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-[var(--surface2)] border border-[var(--border)] flex items-center justify-center font-bold text-sm">
+                    Q
+                  </div>
+                  <div className="pt-1">
+                    <p className="font-semibold">{example.question}</p>
+                    <p className="text-[var(--accent)] font-bold mt-1">→ {example.answer}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
   )
 }
