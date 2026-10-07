@@ -1,37 +1,9 @@
 import Link from 'next/link'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import prisma from '@/lib/db'
-import { KIDS_GAMES, getKidsGame } from '@/lib/kids-games'
-
-const CATEGORY_META: Record<string, { emoji: string; color: string; games: string[] }> = {
-  'Dice Games':   { emoji: '🎲', color: '#f97316', games: ['Farkle'] },
-  'Card Games':   { emoji: '🃏', color: '#3b82f6', games: ['Judgement', '100 Points'] },
-  'Word & Party': { emoji: '🎉', color: '#22c55e', games: ['Imposter', 'Bollywood Codenames', '5 Second Rule', 'Score Keeper', 'Wavelength', 'Scrabble'] },
-  'Kids n Play':  { emoji: '🪁', color: '#a855f7', games: KIDS_GAMES.map(game => game.name) },
-}
-
-const GAME_CATEGORY: Record<string, string> = {
-  farkle: 'Dice Games',
-  'judgement-card-game': 'Card Games',
-  '100-points': 'Card Games',
-  imposter: 'Word & Party',
-  'bollywood-code-names': 'Word & Party',
-  ...Object.fromEntries(KIDS_GAMES.map(game => [game.slug, 'Kids n Play'])),
-  '5-second-rule': 'Word & Party',
-  'score-keeper': 'Word & Party',
-  wavelength: 'Word & Party',
-  scrabble: 'Word & Party',
-}
 
 export default async function Home() {
   const session = await getServerSession(authOptions)
-  const games = await prisma.game.findMany({ orderBy: { id: 'asc' } })
-
-  const categories = Object.entries(CATEGORY_META).map(([cat, meta]) => ({
-    cat, ...meta,
-    gameList: cat === 'Kids n Play' ? KIDS_GAMES : games.filter(g => GAME_CATEGORY[g.slug] === cat),
-  }))
 
   return (
     <div className="max-w-5xl mx-auto px-4 py-10 md:py-16">
@@ -72,48 +44,6 @@ export default async function Home() {
         )}
       </div>
 
-      {/* Game categories */}
-      {(
-        <>
-          <div className="space-y-8 mt-10">
-            {categories.map(({ cat, emoji, color, gameList }) => (
-              <div key={cat}>
-                <div className="flex items-center gap-3 mb-4">
-                  <span className="text-2xl">{emoji}</span>
-                  <h2 className="text-xl font-black tracking-tight">{cat}</h2>
-                  <div className="flex-1 h-px bg-[var(--border)]" />
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {gameList.map((game) => (
-                    <Link
-                      key={game.slug}
-                      href={`/games/${game.slug}`}
-                      className="group bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 hover:border-[var(--accent)] hover:bg-[var(--surface2)] transition-all"
-                    >
-                      <div
-                        className="w-10 h-10 rounded-xl flex items-center justify-center text-xl mb-3 font-bold"
-                        style={{ background: color + '22', color }}
-                      >
-                        {emoji}
-                      </div>
-                      <div className="font-bold text-base mb-1 group-hover:text-[var(--accent)] transition-colors">
-                        {game.name}
-                      </div>
-                      <div className="text-xs text-[var(--muted)] font-medium">{GAME_CATEGORY[game.slug]}{getKidsGame(game.slug) ? ' · Local only' : ''}</div>
-                      <div
-                        className="mt-4 text-xs font-bold flex items-center gap-1 transition-colors"
-                        style={{ color }}
-                      >
-                        {getKidsGame(game.slug) ? 'Play locally' : 'Play now'} <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
     </div>
   )
 }
