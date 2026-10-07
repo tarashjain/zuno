@@ -132,13 +132,33 @@ export default function KidsPlayBoard({ game }: { game: KidsGame }) {
             )}
           </div>
           {!finished && <button onClick={nextQuestion} className="block mx-auto mt-4 py-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--accent)]">Skip question</button>}
-          <ul aria-label="Players" className="flex flex-wrap gap-2 mt-8">
-            {players.map((player, index) => (
-              <li key={index} className={`max-w-full break-words px-3 py-2 text-sm rounded-xl border ${remaining.includes(index) ? 'border-[var(--border)] bg-[var(--surface2)]' : 'border-transparent text-[var(--muted)]'}`}>
-                {player} · {remaining.includes(index) ? (finished ? 'Winner' : remaining[turn] === index ? 'Answering' : 'Still in') : 'Out'}
-              </li>
-            ))}
-          </ul>
+
+          {/* Live scoreboard */}
+          <div className="mt-8 bg-[var(--surface)] border border-[var(--border)] rounded-2xl overflow-hidden" aria-label="Players">
+            <div className="px-4 py-3 border-b border-[var(--border)]">
+              <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Players</h3>
+            </div>
+            <ul>
+              {players.map((player, index) => {
+                const isIn = remaining.includes(index)
+                const isAnswering = isIn && remaining[turn] === index && !finished
+                const isWinner = finished && remaining[0] === index
+                return (
+                  <li key={index} className={`flex items-center justify-between px-4 py-3 border-b border-[var(--border)] last:border-0 ${isAnswering ? 'bg-[var(--surface2)]' : ''}`}>
+                    <span className={`font-bold break-words mr-3 ${!isIn && !isWinner ? 'text-[var(--muted)] line-through' : ''}`}>{player}</span>
+                    <span className={`text-xs font-bold px-3 py-1 rounded-full flex-shrink-0 ${
+                      isWinner ? 'bg-yellow-100 text-yellow-700' :
+                      isAnswering ? 'bg-[var(--accent)] text-white' :
+                      isIn ? 'bg-green-100 text-green-700' :
+                      'bg-[var(--surface2)] text-[var(--muted)]'
+                    }`}>
+                      {isWinner ? '🏆 Winner' : isAnswering ? 'Answering' : isIn ? 'Still in' : 'Out'}
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
+          </div>
           {!finished && (
             <div className="mt-6">
               {confirmReset ? (

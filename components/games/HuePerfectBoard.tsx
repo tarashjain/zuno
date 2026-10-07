@@ -55,6 +55,28 @@ const MEMORIZE_SECS: Record<Difficulty, number> = { easy: 5, medium: 3, hard: 2 
 const ROUNDS_OPTIONS = [3, 5, 10]
 const DEFAULT_GUESS = { h: 180, s: 50, v: 50 }
 
+function LiveScores({ players, scores, currentPlayer }: { players: string[]; scores: number[]; currentPlayer: number }) {
+  if (players.length < 2) return null
+  return (
+    <div className="mt-8 bg-[var(--surface)] border border-[var(--border)] rounded-2xl overflow-hidden">
+      <div className="px-4 py-3 border-b border-[var(--border)]">
+        <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Scores</h3>
+      </div>
+      <ul>
+        {players.map((name, i) => (
+          <li key={i} className={`flex items-center justify-between px-4 py-3 border-b border-[var(--border)] last:border-0 ${i === currentPlayer ? 'bg-[var(--surface2)]' : ''}`}>
+            <span className="font-bold flex items-center gap-2">
+              {i === currentPlayer && <span className="w-2 h-2 rounded-full bg-[var(--accent)] inline-block flex-shrink-0" />}
+              {name}
+            </span>
+            <span className="text-xl font-black">{scores[i]}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  )
+}
+
 function ScoreBar({ value }: { value: number }) {
   const color = value >= 80 ? 'var(--accent)' : value >= 50 ? '#f59e0b' : '#ef4444'
   return (
@@ -259,6 +281,7 @@ export default function HuePerfectBoard() {
       <button onClick={() => goToMemorize(target, difficulty)} className={`${btn} bg-[var(--accent)] text-white text-lg`}>
         I&apos;m ready →
       </button>
+      <LiveScores players={players} scores={scores} currentPlayer={currentPlayer} />
     </main>
   )
 
@@ -331,6 +354,7 @@ export default function HuePerfectBoard() {
       <button onClick={submitGuess} className={`${btn} bg-[var(--accent)] text-white w-full sm:w-auto`}>
         Submit guess →
       </button>
+      <LiveScores players={players} scores={scores} currentPlayer={currentPlayer} />
     </main>
   )
 
@@ -353,17 +377,12 @@ export default function HuePerfectBoard() {
             <span className="text-3xl font-black text-[var(--accent)]">{lastRoundScore}</span>
           </div>
           <ScoreBar value={lastRoundScore} />
-          {players.length > 1 && (
-            <div className="flex justify-between items-center border-t border-[var(--border)] pt-3 mt-1">
-              <span className="font-bold">Running total</span>
-              <span className="text-xl font-black">{scores[currentPlayer]}</span>
-            </div>
-          )}
         </div>
 
         <button onClick={advance} className={`${btn} bg-[var(--accent)] text-white`}>
           {isLastTurn ? 'See final scores' : 'Next →'}
         </button>
+        <LiveScores players={players} scores={scores} currentPlayer={currentPlayer} />
       </main>
     )
   }
