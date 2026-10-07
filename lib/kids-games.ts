@@ -12,6 +12,22 @@ export interface KidsGame {
 
 export const KIDS_GAMES: KidsGame[] = [
   {
+    slug: 'hue-perfect',
+    name: 'Hue Perfect',
+    emoji: '🎨',
+    description: 'See a colour for a few seconds — then recreate it from memory using HSB sliders.',
+    rules: [
+      'A colour swatch is shown on screen. Memorise it — you only have a few seconds!',
+      'The colour disappears. Use the Hue, Saturation, and Brightness sliders to mix it back.',
+      'Submit your guess. The closer your match, the higher your score (out of 100 per round).',
+      'In multiplayer, each player takes their own turn each round. Highest total score wins!',
+    ],
+    examples: [],
+    prompts: [],
+    reminder: 'Memorise the colour, then mix it from memory!',
+    mistakeLabel: '',
+  },
+  {
     slug: 'dont-say-yes-or-no',
     name: 'Don’t Say Yes or No',
     emoji: '🤐',

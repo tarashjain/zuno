@@ -20,17 +20,19 @@ export default function KidsGameDetails({ game }: { game: KidsGame }) {
       <ol className="list-decimal pl-6 space-y-3 mb-8">
         {game.rules.map(rule => <li key={rule} className="pl-2 leading-relaxed">{rule}</li>)}
       </ol>
-      <section className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5">
-        <h2 className="text-xl font-black mb-4">Try it like this</h2>
-        <ul className="space-y-4">
-          {game.examples.map(example => (
-            <li key={example.question}>
-              <p className="font-semibold">{example.question}</p>
-              <p className="text-[var(--accent)] font-bold mt-1">→ {example.answer}</p>
-            </li>
-          ))}
-        </ul>
-      </section>
+      {game.examples.length > 0 && (
+        <section className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5">
+          <h2 className="text-xl font-black mb-4">Try it like this</h2>
+          <ul className="space-y-4">
+            {game.examples.map(example => (
+              <li key={example.question}>
+                <p className="font-semibold">{example.question}</p>
+                <p className="text-[var(--accent)] font-bold mt-1">→ {example.answer}</p>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </main>
   )
 }
