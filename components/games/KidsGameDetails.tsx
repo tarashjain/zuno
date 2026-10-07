@@ -13,8 +13,11 @@ export default function KidsGameDetails({ game }: { game: KidsGame }) {
       </div>
       <div className="bg-[var(--surface2)] border border-[var(--border)] rounded-2xl p-5 mb-8">
         <p className="font-bold mb-2">1–8 players · One device · Play together in person</p>
-        <p className="text-sm text-[var(--muted)] mb-5">Read the questions aloud and let the group judge each answer. No sign-in needed. Your game stays on this device; refreshing starts over.</p>
-        <Link href={`/games/${game.slug}/play`} className="inline-block px-6 py-3 bg-[var(--accent)] text-white font-bold rounded-xl hover:brightness-110">Play locally →</Link>
+        <p className="text-sm text-[var(--muted)] mb-5">No sign-in needed. Your game stays on this device; refreshing starts over.</p>
+        <div className="flex gap-3 flex-wrap">
+          <Link href={`/games/${game.slug}/play`} className="px-6 py-3 bg-[var(--accent)] text-white font-bold rounded-xl hover:brightness-110">New Game</Link>
+          <Link href="/" className="px-6 py-3 bg-[var(--surface)] border border-[var(--border)] font-bold rounded-xl hover:border-[var(--accent)] transition-all">Back</Link>
+        </div>
       </div>
       <h2 className="text-2xl font-black mb-4">How to Play</h2>
       <ol className="list-decimal pl-6 space-y-3 mb-8">

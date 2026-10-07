@@ -156,13 +156,13 @@ export default async function GamePage({ params }: PageProps) {
                 href={`/room/new?game=${params.slug}&mode=local`}
                 className="px-6 py-3 bg-[var(--accent)] text-white font-bold rounded-lg hover:brightness-110 transition-all"
               >
-                🖥️ New Local Game
+                New Game
               </Link>
               <Link
                 href={`/room/new?game=${params.slug}&mode=individual`}
                 className="px-6 py-3 bg-[var(--surface2)] text-[var(--text)] font-bold rounded-lg border border-[var(--border)] hover:border-[var(--accent)] transition-all"
               >
-                📱 New Room (Share Code)
+                New Room (Share Room Code)
               </Link>
             </>
           ) : (
@@ -177,25 +177,7 @@ export default async function GamePage({ params }: PageProps) {
             href="/"
             className="px-6 py-3 bg-[var(--surface2)] text-[var(--text)] font-bold rounded-lg border border-[var(--border)] hover:border-[var(--accent)] transition-all"
           >
-            ← Back
-          </Link>
-        </div>
-
-        {session && (
-          <p className="text-xs text-[var(--muted)] font-semibold mt-3">
-            Both buttons above start a brand new game. <strong>Local</strong>: one device, add every player yourself, no room code needed. <strong>Individually</strong>: share a room code and each player joins from their own device.
-          </p>
-        )}
-
-        <div className="mt-4 bg-[var(--cream)] border-2 border-[var(--border)] rounded-xl p-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm font-semibold text-[var(--muted)]">
-            Already have a room code from someone else?
-          </p>
-          <Link
-            href="/join"
-            className="px-4 py-2 bg-white border-2 border-[var(--border)] rounded-lg font-bold text-sm hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
-          >
-            🔑 Join That Room →
+            Back
           </Link>
         </div>
       </div>
