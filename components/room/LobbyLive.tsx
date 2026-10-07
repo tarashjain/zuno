@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
-import { joinSession, startSession, toggleReady } from '@/app/actions/score'
+import { joinSession, startSession, toggleReady, removePlayer } from '@/app/actions/score'
 
 type PlayerDTO = { id: number; guestName: string; ready: boolean }
 
@@ -78,6 +78,12 @@ export default function LobbyLive({
     if (myPlayerId === null) return
     startTransition(async () => {
       await toggleReady(sessionId, myPlayerId)
+    })
+  }
+
+  const handleRemove = (playerId: number) => {
+    startTransition(async () => {
+      await removePlayer(sessionId, playerId)
     })
   }
 
@@ -165,7 +171,16 @@ export default function LobbyLive({
                   <span className="flex items-center gap-2 truncate">
                     <span>👤</span> {p.guestName}
                   </span>
-                  {!isLocal && (
+                  {isLocal && isHost ? (
+                    <button
+                      onClick={() => handleRemove(p.id)}
+                      disabled={pending}
+                      aria-label={`Remove ${p.guestName}`}
+                      className="flex-shrink-0 w-7 h-7 flex items-center justify-center rounded-full text-[var(--muted)] hover:bg-red-100 hover:text-red-600 transition-colors disabled:opacity-40 text-lg leading-none"
+                    >
+                      ×
+                    </button>
+                  ) : !isLocal && (
                     <span
                       className={`text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-full flex-shrink-0 ${
                         p.ready ? 'bg-[#16a34a] text-white' : 'bg-[var(--surface2)] text-[var(--muted)]'

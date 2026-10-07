@@ -88,6 +88,23 @@ export async function toggleReady(sessionId: string, playerId: number) {
   return { ok: true }
 }
 
+export async function removePlayer(
+  sessionId: string,
+  playerId: number
+): Promise<{ ok: boolean; reason?: string }> {
+  const authSession = await getServerSession(authOptions)
+  const room = await prisma.gameSession.findUnique({ where: { id: sessionId } })
+  if (!room) return { ok: false, reason: 'Room not found.' }
+  if (room.mode !== 'local') return { ok: false, reason: 'Only local games support host removal.' }
+  if (!authSession?.user?.email || authSession.user.email !== room.hostEmail) {
+    return { ok: false, reason: 'Only the host can remove players.' }
+  }
+  if (room.status !== 'lobby') return { ok: false, reason: 'The game has already started.' }
+  await prisma.sessionPlayer.deleteMany({ where: { id: playerId, sessionId } })
+  revalidatePath(`/room/${sessionId}`)
+  return { ok: true }
+}
+
 export async function startSession(sessionId: string): Promise<{ ok: boolean; reason?: string }> {
   const authSession = await getServerSession(authOptions)
 
