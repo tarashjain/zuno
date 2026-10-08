@@ -49,9 +49,9 @@ function randomTarget() {
 }
 
 type Phase = 'setup' | 'between' | 'memorize' | 'recreate' | 'result' | 'gameover'
-type Difficulty = 'easy' | 'medium' | 'hard'
+type Difficulty = 'easy' | 'medium' | 'hard' | 'nightmare'
 
-const MEMORIZE_SECS: Record<Difficulty, number> = { easy: 5, medium: 3, hard: 2 }
+const MEMORIZE_SECS: Record<Difficulty, number> = { easy: 5, medium: 3, hard: 2, nightmare: 3 }
 const ROUNDS_OPTIONS = [3, 5, 10]
 const DEFAULT_GUESS = { h: 180, s: 50, v: 50 }
 
@@ -112,10 +112,15 @@ export default function HuePerfectBoard() {
   const [guess, setGuess] = useState(DEFAULT_GUESS)
   const [countdown, setCountdown] = useState(5)
   const [lastRoundScore, setLastRoundScore] = useState(0)
+  const [isFlashing, setIsFlashing] = useState(false)
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
-  useEffect(() => () => { if (intervalRef.current) clearInterval(intervalRef.current) }, [])
+  useEffect(() => () => {
+    if (intervalRef.current) clearInterval(intervalRef.current)
+    if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current)
+  }, [])
 
   function clearTimer() {
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null }
@@ -136,7 +141,15 @@ export default function HuePerfectBoard() {
     setTarget(t)
     setGuess(DEFAULT_GUESS)
     setPhase('memorize')
-    startCountdown(MEMORIZE_SECS[diff], () => setPhase('recreate'))
+    if (diff === 'nightmare') {
+      setIsFlashing(true)
+      flashTimeoutRef.current = setTimeout(() => {
+        setIsFlashing(false)
+        startCountdown(MEMORIZE_SECS[diff], () => setPhase('recreate'))
+      }, 700)
+    } else {
+      startCountdown(MEMORIZE_SECS[diff], () => setPhase('recreate'))
+    }
   }
 
   function startGame(playerNames: string[]) {
@@ -297,6 +310,10 @@ export default function HuePerfectBoard() {
                 {d.charAt(0).toUpperCase() + d.slice(1)} ({MEMORIZE_SECS[d]}s)
               </button>
             ))}
+            <button type="button" onClick={() => setDifficulty('nightmare')}
+              className={`px-3 py-2 rounded-lg font-bold border text-sm ${difficulty === 'nightmare' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white border-gray-400 text-gray-700'}`}>
+              💀 Nightmare ({MEMORIZE_SECS.nightmare}s + flash)
+            </button>
           </div>
 
           <button
@@ -322,7 +339,8 @@ export default function HuePerfectBoard() {
       <h2 className="text-3xl font-black mb-3">Pass to {players[currentPlayer]}</h2>
       <p className="text-[var(--muted)] mb-10 text-lg">
         Hand the device to <span className="font-bold text-[var(--fg)]">{players[currentPlayer]}</span>.
-        When ready, tap below — you&apos;ll have {MEMORIZE_SECS[difficulty]} seconds to memorise the colour.
+        When ready, tap below — you&apos;ll have {MEMORIZE_SECS[difficulty]} seconds to memorise the colour
+        {difficulty === 'nightmare' && <span className="font-bold text-gray-800"> (after a white flash 💀)</span>}.
       </p>
       <button onClick={() => goToMemorize(target, difficulty)} className={`${btn} bg-[var(--accent)] text-white text-lg`}>
         I&apos;m ready →
@@ -331,16 +349,19 @@ export default function HuePerfectBoard() {
     </main>
   )
 
-  if (phase === 'memorize') return (
-    <main className="max-w-2xl mx-auto px-4 py-8 md:py-12 text-center">
-      <p className="text-sm font-bold text-[var(--accent)] mb-2">Round {currentRound} of {totalRounds} · {players[currentPlayer]}</p>
-      <p className="text-[var(--muted)] mb-6 font-medium text-lg">Memorise this colour!</p>
-      <div className="rounded-3xl mx-auto mb-8 border border-[var(--border)]"
-        style={{ background: hsbToCss(target.h, target.s, target.v), width: 240, height: 240 }} />
-      <div className="text-7xl font-black tabular-nums text-[var(--accent)]">{countdown}</div>
-      <p className="text-sm text-[var(--muted)] mt-2">seconds left</p>
-    </main>
-  )
+  if (phase === 'memorize') {
+    if (isFlashing) return <div className="fixed inset-0 bg-white z-50" />
+    return (
+      <main className="max-w-2xl mx-auto px-4 py-8 md:py-12 text-center">
+        <p className="text-sm font-bold text-[var(--accent)] mb-2">Round {currentRound} of {totalRounds} · {players[currentPlayer]}</p>
+        <p className="text-[var(--muted)] mb-6 font-medium text-lg">Memorise this colour!</p>
+        <div className="rounded-3xl mx-auto mb-8 border border-[var(--border)]"
+          style={{ background: hsbToCss(target.h, target.s, target.v), width: 240, height: 240 }} />
+        <div className="text-7xl font-black tabular-nums text-[var(--accent)]">{countdown}</div>
+        <p className="text-sm text-[var(--muted)] mt-2">seconds left</p>
+      </main>
+    )
+  }
 
   if (phase === 'recreate') return (
     <main className="max-w-2xl mx-auto px-4 py-8 md:py-12">
