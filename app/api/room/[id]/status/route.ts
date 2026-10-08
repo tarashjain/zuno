@@ -8,7 +8,7 @@ const TWO_HOURS_MS = 2 * 60 * 60 * 1000
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   let session = await prisma.gameSession.findUnique({
     where: { id: params.id },
-    include: { players: { orderBy: { joinedAt: 'asc' } } },
+    include: { game: true, players: { orderBy: { joinedAt: 'asc' } } },
   })
 
   if (!session) {
@@ -16,7 +16,12 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   }
 
   // Auto-close games that have been active for more than 2 hours.
-  if (session.status === 'active' && Date.now() - session.createdAt.getTime() > TWO_HOURS_MS) {
+  // Score Keeper is exempt — it's designed to run for an entire multi-day game.
+  if (
+    session.status === 'active' &&
+    session.game.slug !== 'score-keeper' &&
+    Date.now() - session.createdAt.getTime() > TWO_HOURS_MS
+  ) {
     await prisma.gameSession.update({ where: { id: params.id }, data: { status: 'completed' } })
     session = { ...session, status: 'completed' }
   }

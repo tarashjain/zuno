@@ -34,21 +34,27 @@ export default function ScorekeeperBoard({
     if (saving) return
     setSaving(true)
 
-    const updates = players.map(p => ({ id: p.id, points: parseInt(entries[p.id]) || 0 }))
+    try {
+      const updates = players.map(p => ({ id: p.id, points: parseInt(entries[p.id]) || 0 }))
 
-    for (const u of updates) {
-      await submitScore(session.id, u.id, u.points, round)
+      for (const u of updates) {
+        await submitScore(session.id, u.id, u.points, round)
+      }
+
+      setPlayers(
+        players.map(p => {
+          const u = updates.find(x => x.id === p.id)!
+          return { ...p, scores: [...p.scores, { points: u.points, round }] }
+        })
+      )
+      setEntries({})
+      showToast(`Round ${round} complete! ✅`)
+    } catch (err) {
+      showToast('Failed to save — please try again.')
+      console.error(err)
+    } finally {
+      setSaving(false)
     }
-
-    setPlayers(
-      players.map(p => {
-        const u = updates.find(x => x.id === p.id)!
-        return { ...p, scores: [...p.scores, { points: u.points, round }] }
-      })
-    )
-    setEntries({})
-    setSaving(false)
-    showToast(`Round ${round} complete! ✅`)
   }
 
   if (players.length === 0) {

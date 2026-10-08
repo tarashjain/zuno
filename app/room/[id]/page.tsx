@@ -13,8 +13,13 @@ export default async function GameRoom({ params }: { params: { id: string } }) {
   if (!session) return notFound()
 
   // Auto-close games older than 2 hours on page load as well.
+  // Score Keeper is exempt — it's designed to run for an entire multi-day game.
   const TWO_HOURS_MS = 2 * 60 * 60 * 1000
-  if (session.status === 'active' && Date.now() - session.createdAt.getTime() > TWO_HOURS_MS) {
+  if (
+    session.status === 'active' &&
+    session.game.slug !== 'score-keeper' &&
+    Date.now() - session.createdAt.getTime() > TWO_HOURS_MS
+  ) {
     await prisma.gameSession.update({ where: { id: params.id }, data: { status: 'completed' } })
     session.status = 'completed'
   }
