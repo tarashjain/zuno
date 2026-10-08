@@ -28,6 +28,25 @@ export const KIDS_GAMES: KidsGame[] = [
     mistakeLabel: '',
   },
   {
+    slug: 'say-the-color',
+    name: 'Say the Color',
+    emoji: '🌈',
+    description: 'Say the FONT COLOR of each word — not the word itself. Can your brain handle the Stroop effect?',
+    rules: [
+      'Look at each word on screen — but say its FONT COLOR out loud, not what the word says.',
+      'Example: "RED" written in blue → say "Blue".',
+      'Everyone attempts the same sequence each round. The host marks who got it right.',
+      'The sequence gets longer every time at least one player succeeds. +1 point for a correct run!',
+    ],
+    examples: [
+      { question: 'GREEN written in red font', answer: 'Say "Red"!' },
+      { question: 'BLUE written in yellow font', answer: 'Say "Yellow"!' },
+    ],
+    prompts: [],
+    reminder: 'Say the color you SEE, not the word you READ!',
+    mistakeLabel: '',
+  },
+  {
     slug: 'dont-say-yes-or-no',
     name: "Don't Say Yes or No",
     emoji: '🤐',
