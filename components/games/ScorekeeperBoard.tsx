@@ -108,9 +108,17 @@ export default function ScorekeeperBoard({
                 <td className="p-2 sm:p-3">
                   <input
                     type="number"
+                    step="1"
+                    min={-2147483647}
+                    max={2147483647}
                     className="w-20 border-2 border-[var(--border)] rounded-lg p-1.5 font-semibold bg-[var(--paper)] outline-none focus:border-[var(--accent)] transition-colors"
                     value={entries[p.id] ?? ''}
-                    onChange={e => setEntries(en => ({ ...en, [p.id]: e.target.value }))}
+                    onChange={e => {
+                      const raw = e.target.value
+                      if (raw === '' || raw === '-') { setEntries(en => ({ ...en, [p.id]: raw })); return }
+                      const n = parseInt(raw, 10)
+                      if (!isNaN(n)) setEntries(en => ({ ...en, [p.id]: String(n) }))
+                    }}
                     placeholder="0"
                   />
                 </td>
