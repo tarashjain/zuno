@@ -81,3 +81,21 @@ model Score {
   notes    String?
   player   SessionPlayer @relation(fields: [playerId], references: [id], onDelete: Cascade)
 }
+
+// Kids n Play — lightweight session record saved at the end of each local game.
+model KidsSession {
+  id        String              @id @default(cuid())
+  userEmail String
+  gameSlug  String
+  playedAt  DateTime            @default(now())
+  players   KidsSessionPlayer[]
+}
+
+model KidsSessionPlayer {
+  id         Int         @id @default(autoincrement())
+  sessionId  String
+  playerName String
+  finalScore Int         @default(0)
+  won        Boolean     @default(false)
+  session    KidsSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+}

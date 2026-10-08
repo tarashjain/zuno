@@ -1,8 +1,9 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import type { KidsGame } from '@/lib/kids-games'
+import { saveKidsSession } from '@/app/actions/kids-session'
 
 function shuffled(prompts: string[]) {
   const deck = [...prompts]
@@ -25,8 +26,20 @@ export default function KidsPlayBoard({ game }: { game: KidsGame }) {
   const [question, setQuestion] = useState(0)
   const [confirmReset, setConfirmReset] = useState(false)
 
+  const savedRef = useRef(false)
+
   const active = players.length > 0
   const finished = active && remaining.length === 1
+
+  useEffect(() => {
+    if (!finished || savedRef.current || players.length === 0) return
+    savedRef.current = true
+    const winnerName = players[remaining[0]]
+    saveKidsSession(
+      game.slug,
+      players.map(name => ({ name, score: 0, won: name === winnerName }))
+    ).catch(() => {})
+  }, [finished]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function handleAdd() {
     const name = inputName.trim()
@@ -42,6 +55,7 @@ export default function KidsPlayBoard({ game }: { game: KidsGame }) {
   }
 
   function start(nextPlayers: string[]) {
+    savedRef.current = false
     setPlayers(nextPlayers)
     setRemaining(nextPlayers.map((_, i) => i))
     setTurn(0)

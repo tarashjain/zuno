@@ -3,6 +3,8 @@ import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
 import { getKidsGame } from '@/lib/kids-games'
 import KidsGameDetails from '@/components/games/KidsGameDetails'
+import { getKidsHistory } from '@/app/actions/kids-session'
+import type { KidsSessionHistory } from '@/app/actions/kids-session'
 
 const GAME_INFO: Record<string, { name: string; emoji: string; description: string; rules: string[] }> = {
   farkle: {
@@ -120,7 +122,13 @@ interface PageProps {
 
 export default async function GamePage({ params }: PageProps) {
   const localGame = getKidsGame(params.slug)
-  if (localGame) return <KidsGameDetails game={localGame} />
+  if (localGame) {
+    const session = await getServerSession(authOptions)
+    const history: KidsSessionHistory = session?.user?.email
+      ? await getKidsHistory(params.slug, session.user.email)
+      : []
+    return <KidsGameDetails game={localGame} history={history} />
+  }
 
   const session = await getServerSession(authOptions)
   const gameInfo = GAME_INFO[params.slug]

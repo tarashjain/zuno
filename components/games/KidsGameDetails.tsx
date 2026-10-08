@@ -1,7 +1,8 @@
 import Link from 'next/link'
 import type { KidsGame } from '@/lib/kids-games'
+import type { KidsSessionHistory } from '@/app/actions/kids-session'
 
-export default function KidsGameDetails({ game }: { game: KidsGame }) {
+export default function KidsGameDetails({ game, history }: { game: KidsGame; history: KidsSessionHistory }) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10 md:py-16">
       <div className="mb-10">
@@ -60,6 +61,42 @@ export default function KidsGameDetails({ game }: { game: KidsGame }) {
                   </div>
                 </div>
               ))}
+            </div>
+          </div>
+        )}
+
+        {history.length > 0 && (
+          <div>
+            <h2 className="text-2xl font-black mb-4">Recent Sessions</h2>
+            <div className="space-y-3">
+              {history.map(session => {
+                const winner = session.players.find(p => p.won)
+                const hasScores = session.players.some(p => p.finalScore > 0)
+                return (
+                  <div key={session.id} className="bg-[var(--surface)] border border-[var(--border)] rounded-xl p-4">
+                    <p className="text-xs font-bold text-[var(--muted)] mb-3">
+                      {new Date(session.playedAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </p>
+                    <ul className="space-y-1">
+                      {session.players.map((p, i) => (
+                        <li key={i} className="flex items-center justify-between text-sm font-semibold">
+                          <span className={p.won ? 'font-black' : 'text-[var(--muted)]'}>
+                            {p.won && '🏆 '}{p.playerName}
+                          </span>
+                          {hasScores && (
+                            <span className={p.won ? 'font-black text-[var(--accent)]' : 'text-[var(--muted)]'}>
+                              {p.finalScore} pts
+                            </span>
+                          )}
+                          {!hasScores && p.won && (
+                            <span className="text-xs font-bold text-yellow-600 bg-yellow-50 px-2 py-0.5 rounded-full">Winner</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )
+              })}
             </div>
           </div>
         )}

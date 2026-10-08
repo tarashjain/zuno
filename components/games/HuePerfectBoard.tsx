@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
+import { saveKidsSession } from '@/app/actions/kids-session'
 
 function hsbToRgb(h: number, s: number, v: number): [number, number, number] {
   s /= 100; v /= 100
@@ -116,11 +117,22 @@ export default function HuePerfectBoard() {
 
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const flashTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
+  const savedRef = useRef(false)
 
   useEffect(() => () => {
     if (intervalRef.current) clearInterval(intervalRef.current)
     if (flashTimeoutRef.current) clearTimeout(flashTimeoutRef.current)
   }, [])
+
+  useEffect(() => {
+    if (phase !== 'gameover' || savedRef.current || players.length === 0) return
+    savedRef.current = true
+    const maxScore = Math.max(...scores)
+    saveKidsSession(
+      'hue-perfect',
+      players.map((name, i) => ({ name, score: scores[i], won: scores[i] === maxScore }))
+    ).catch(() => {})
+  }, [phase]) // eslint-disable-line react-hooks/exhaustive-deps
 
   function clearTimer() {
     if (intervalRef.current) { clearInterval(intervalRef.current); intervalRef.current = null }
@@ -194,6 +206,7 @@ export default function HuePerfectBoard() {
   }
 
   function playAgain() {
+    savedRef.current = false
     const t = randomTarget()
     setScores(new Array(players.length).fill(0))
     setCurrentPlayer(0)
