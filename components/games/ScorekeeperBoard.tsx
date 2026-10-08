@@ -30,12 +30,21 @@ export default function ScorekeeperBoard({
     setTimeout(() => setToast(null), 2500)
   }
 
+  const INT_MAX = 2_147_483_647
+
   const completeRound = async () => {
     if (saving) return
+
+    const updates = players.map(p => ({ id: p.id, points: parseInt(entries[p.id]) || 0 }))
+    const outOfRange = updates.find(u => Math.abs(u.points) > INT_MAX)
+    if (outOfRange) {
+      showToast('Score too large — max ±2,147,483,647')
+      return
+    }
+
     setSaving(true)
 
     try {
-      const updates = players.map(p => ({ id: p.id, points: parseInt(entries[p.id]) || 0 }))
 
       for (const u of updates) {
         await submitScore(session.id, u.id, u.points, round)
