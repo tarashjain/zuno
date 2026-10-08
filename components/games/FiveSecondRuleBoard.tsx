@@ -147,15 +147,33 @@ export default function FiveSecondRuleBoard({
       )}
 
       {effectivePhase === 'countdown' && phrase && (
-        <div className="bg-[var(--ink)] text-[var(--paper)] rounded-2xl p-6 mb-6 text-center">
-          <p className="text-xs font-bold uppercase tracking-widest opacity-60 mb-3">Name 3…</p>
-          <p className="text-2xl font-extrabold mb-6">{phrase.word}</p>
-          <div className="text-5xl font-mono font-black mb-4">{timeLeft.toFixed(1)}s</div>
-          <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-[var(--accent)] transition-[width] duration-75 ease-linear"
-              style={{ width: `${pct}%` }}
-            />
+        <div className="mb-6">
+          <div className="bg-[var(--ink)] text-[var(--paper)] rounded-2xl p-6 mb-4 text-center">
+            <p className="text-xs font-bold uppercase tracking-widest opacity-60 mb-3">Name 3…</p>
+            <p className="text-2xl font-extrabold mb-6">{phrase.word}</p>
+            <div className="text-5xl font-mono font-black mb-4">{timeLeft.toFixed(1)}s</div>
+            <div className="w-full h-3 bg-white/20 rounded-full overflow-hidden">
+              <div
+                className="h-full bg-[var(--accent)] transition-[width] duration-75 ease-linear"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
+          <div className="flex gap-3">
+            <button
+              onClick={() => scoreRound(true)}
+              disabled={saving}
+              className="flex-1 py-3 bg-[#16a34a] text-white rounded-xl font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_2px_0_#166534]"
+            >
+              ✅ Got it (+1)
+            </button>
+            <button
+              onClick={() => scoreRound(false)}
+              disabled={saving}
+              className="flex-1 py-3 bg-[#dc2626] text-white rounded-xl font-bold hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_2px_0_#991b1b]"
+            >
+              ❌ Missed
+            </button>
           </div>
         </div>
       )}
