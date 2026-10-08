@@ -18,7 +18,7 @@ const COLOR_META: Record<ColorKey, { label: string; css: string }> = {
 }
 
 type WordCard = { word: ColorKey; color: ColorKey }
-type Phase = 'setup' | 'playing' | 'results' | 'gameover'
+type Phase = 'setup' | 'between' | 'playing' | 'result' | 'gameover'
 
 const LEVEL_UPS = ['Amazing!', 'Color Champion!', 'Great Job!', 'Brilliant!', 'Superstar!']
 
@@ -40,9 +40,9 @@ function Scoreboard({ players, scores }: { players: string[]; scores: number[] }
   const maxScore = Math.max(...scores, 0)
   const ranked = players.map((name, i) => ({ name, score: scores[i] })).sort((a, b) => b.score - a.score)
   return (
-    <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl overflow-hidden">
+    <div className="mt-8 bg-[var(--surface)] border border-[var(--border)] rounded-2xl overflow-hidden">
       <div className="px-4 py-3 border-b border-[var(--border)]">
-        <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Scoreboard</h3>
+        <h3 className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">Scores</h3>
       </div>
       <ul>
         {ranked.map((p, rank) => (
@@ -69,7 +69,8 @@ export default function StroopBoard() {
   const [level, setLevel] = useState(1)
   const [round, setRound] = useState(1)
   const [sequence, setSequence] = useState<WordCard[]>([])
-  const [playerResults, setPlayerResults] = useState<(boolean | null)[]>([])
+  const [currentPlayerIndex, setCurrentPlayerIndex] = useState(0)
+  const [roundResults, setRoundResults] = useState<(boolean | null)[]>([])
   const [showAnswers, setShowAnswers] = useState(false)
   const [levelUpMsg, setLevelUpMsg] = useState('')
 
@@ -103,43 +104,39 @@ export default function StroopBoard() {
     setLevel(1)
     setRound(1)
     setSequence(generateSequence(wordCount(1)))
-    setPlayerResults(new Array(playerNames.length).fill(null))
+    setCurrentPlayerIndex(0)
+    setRoundResults(new Array(playerNames.length).fill(null))
     setShowAnswers(false)
     setLevelUpMsg('')
-    setPhase('playing')
+    setPhase(playerNames.length === 1 ? 'playing' : 'between')
   }
 
-  function finishRound() {
-    setPlayerResults(new Array(players.length).fill(null))
-    setShowAnswers(false)
-    setPhase('results')
-  }
-
-  function setResult(idx: number, got: boolean) {
-    setPlayerResults(prev => prev.map((r, i) => i === idx ? got : r))
-  }
-
-  function nextRound() {
-    const anyGot = playerResults.some(r => r === true)
-    const newLevel = anyGot ? level + 1 : level
-    const newScores = scores.map((s, i) => playerResults[i] === true ? s + 1 : s)
+  function advance(got: boolean) {
+    const newScores = scores.map((s, i) => i === currentPlayerIndex && got ? s + 1 : s)
     setScores(newScores)
-    setLevel(newLevel)
-    setRound(r => r + 1)
-    setSequence(generateSequence(wordCount(newLevel)))
-    setPlayerResults(new Array(players.length).fill(null))
-    setShowAnswers(false)
-    setLevelUpMsg(anyGot ? pick(LEVEL_UPS) : '')
-    setPhase('playing')
+
+    const newRoundResults = roundResults.map((r, i) => i === currentPlayerIndex ? got : r)
+    const isLastPlayer = currentPlayerIndex === players.length - 1
+
+    if (isLastPlayer) {
+      const anyGot = newRoundResults.some(r => r === true)
+      const newLevel = anyGot ? level + 1 : level
+      setLevel(newLevel)
+      setRound(r => r + 1)
+      setSequence(generateSequence(wordCount(newLevel)))
+      setRoundResults(new Array(players.length).fill(null))
+      setCurrentPlayerIndex(0)
+      setLevelUpMsg(anyGot ? pick(LEVEL_UPS) : '')
+      setShowAnswers(false)
+      setPhase(players.length === 1 ? 'playing' : 'between')
+    } else {
+      setRoundResults(newRoundResults)
+      setCurrentPlayerIndex(currentPlayerIndex + 1)
+      setShowAnswers(false)
+      setPhase('between')
+    }
   }
 
-  function endGame() {
-    const finalScores = scores.map((s, i) => phase === 'results' && playerResults[i] === true ? s + 1 : s)
-    setScores(finalScores)
-    setPhase('gameover')
-  }
-
-  const allResultsIn = playerResults.every(r => r !== null)
   const btn = 'px-5 py-3 rounded-xl font-bold transition-colors'
 
   /* ── SETUP ─────────────────────────────────────────────────── */
@@ -211,30 +208,55 @@ export default function StroopBoard() {
     </main>
   )
 
-  /* ── PLAYING ────────────────────────────────────────────────── */
-  if (phase === 'playing') return (
-    <main className="max-w-2xl mx-auto px-4 py-8 md:py-10">
+  /* ── BETWEEN ────────────────────────────────────────────────── */
+  if (phase === 'between') return (
+    <main className="max-w-2xl mx-auto px-4 py-8 md:py-12 text-center">
       {levelUpMsg && (
-        <div className="mb-4 p-3 bg-yellow-50 border-2 border-yellow-300 rounded-xl text-center font-black text-yellow-700 text-lg">
+        <div className="mb-6 p-3 bg-yellow-50 border-2 border-yellow-300 rounded-xl font-black text-yellow-700 text-lg">
           🎉 Level {level}! {levelUpMsg}
         </div>
       )}
+      <p className="text-sm font-bold text-[var(--accent)] mb-6">Round {round} · Level {level} · {sequence.length} words</p>
+      <div className="text-6xl mb-4">🌈</div>
+      <h2 className="text-3xl font-black mb-3">Pass to {players[currentPlayerIndex]}</h2>
+      <p className="text-[var(--muted)] mb-10 text-lg">
+        Hand the device to <span className="font-bold text-[var(--text)]">{players[currentPlayerIndex]}</span>.
+        Say the FONT COLOR of each word — not the word itself!
+      </p>
+      <button onClick={() => { setShowAnswers(false); setPhase('playing') }}
+        className={`${btn} bg-[var(--accent)] text-white text-lg`}>
+        I&apos;m ready →
+      </button>
 
-      <div className="flex items-start justify-between mb-6">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-1">Say the Color, Not the Word</p>
-          <h1 className="text-2xl font-black">Level {level} · Round {round}</h1>
+      {roundResults.some(r => r !== null) && (
+        <div className="mt-10 bg-[var(--surface)] border border-[var(--border)] rounded-2xl overflow-hidden text-left">
+          <div className="px-4 py-3 border-b border-[var(--border)]">
+            <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">This round so far</p>
+          </div>
+          <ul>
+            {players.map((name, i) => roundResults[i] !== null && (
+              <li key={i} className="flex items-center justify-between px-4 py-3 border-b border-[var(--border)] last:border-0">
+                <span className="font-bold">{name}</span>
+                <span className={`text-sm font-bold ${roundResults[i] ? 'text-green-600' : 'text-red-500'}`}>
+                  {roundResults[i] ? '✅ Got It' : '❌ Missed'}
+                </span>
+              </li>
+            ))}
+          </ul>
         </div>
-        <div className="bg-[var(--surface)] border border-[var(--border)] rounded-xl px-4 py-2 text-center flex-shrink-0">
-          <p className="text-xs font-bold text-[var(--muted)]">Words</p>
-          <p className="text-2xl font-black text-[var(--accent)]">{sequence.length}</p>
-        </div>
-      </div>
+      )}
 
-      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 mb-6">
-        <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-5 text-center">
-          Say the FONT COLOR in order →
-        </p>
+      <Scoreboard players={players} scores={scores} />
+    </main>
+  )
+
+  /* ── PLAYING ────────────────────────────────────────────────── */
+  if (phase === 'playing') return (
+    <main className="max-w-2xl mx-auto px-4 py-8 md:py-10">
+      <p className="text-sm font-bold text-[var(--accent)] mb-2">Round {round} · Level {level} · {players[currentPlayerIndex]}</p>
+      <p className="text-[var(--muted)] mb-6 font-medium text-lg">Say the FONT COLOR in order!</p>
+
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-6 mb-8">
         <div className="flex flex-wrap gap-x-6 gap-y-4 justify-center">
           {sequence.map((card, i) => (
             <span key={i} className="text-4xl md:text-5xl font-black select-none"
@@ -245,27 +267,27 @@ export default function StroopBoard() {
         </div>
       </div>
 
-      <button onClick={finishRound}
-        className={`${btn} w-full bg-[var(--accent)] text-white text-lg mb-6 shadow-[0_2px_0_#b83208]`}>
-        Finish Round →
+      <button onClick={() => setPhase('result')}
+        className={`${btn} w-full bg-[var(--accent)] text-white text-lg shadow-[0_2px_0_#b83208]`}>
+        Finish →
       </button>
 
-      <Scoreboard players={players} scores={scores} />
+      {players.length > 1 && <Scoreboard players={players} scores={scores} />}
 
-      <button onClick={endGame} className="block mx-auto mt-6 text-sm font-bold text-[var(--muted)] hover:text-[var(--accent)]">
+      <button onClick={() => setPhase('gameover')}
+        className="block mx-auto mt-6 text-sm font-bold text-[var(--muted)] hover:text-[var(--accent)]">
         End Game
       </button>
     </main>
   )
 
-  /* ── RESULTS ────────────────────────────────────────────────── */
-  if (phase === 'results') return (
+  /* ── RESULT ─────────────────────────────────────────────────── */
+  if (phase === 'result') return (
     <main className="max-w-2xl mx-auto px-4 py-8 md:py-10">
-      <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-1">Results</p>
-      <h1 className="text-2xl font-black mb-5">Round {round} · Level {level}</h1>
+      <p className="text-sm font-bold text-[var(--accent)] mb-2">Round {round} · Level {level} · {players[currentPlayerIndex]}</p>
+      <h2 className="text-2xl font-black mb-6">Did {players[currentPlayerIndex]} get it?</h2>
 
-      {/* Sequence display */}
-      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 mb-5">
+      <div className="bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 mb-6">
         <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-4 text-center">The sequence</p>
         <div className="flex flex-wrap gap-x-4 gap-y-3 justify-center mb-4">
           {sequence.map((card, i) => (
@@ -274,7 +296,6 @@ export default function StroopBoard() {
             </span>
           ))}
         </div>
-
         {showAnswers && (
           <div className="border-t border-[var(--border)] pt-4">
             <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-2 text-center">Correct answers</p>
@@ -288,56 +309,24 @@ export default function StroopBoard() {
             </div>
           </div>
         )}
-
         <button onClick={() => setShowAnswers(v => !v)}
           className="mt-4 text-xs font-bold text-[var(--muted)] hover:text-[var(--accent)] block mx-auto transition-colors">
           {showAnswers ? 'Hide' : 'Show'} Correct Answers
         </button>
       </div>
 
-      {/* Per-player Got It / Missed */}
-      <div className="space-y-3 mb-5">
-        {players.map((name, i) => (
-          <div key={i} className={`flex items-center justify-between bg-white border-2 rounded-xl px-4 py-3 transition-colors ${
-            playerResults[i] === true ? 'border-green-400 bg-green-50' :
-            playerResults[i] === false ? 'border-red-300 bg-red-50' : 'border-[var(--border)]'
-          }`}>
-            <span className="font-bold truncate mr-3">{name}</span>
-            <div className="flex gap-2 flex-shrink-0">
-              <button onClick={() => setResult(i, true)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
-                  playerResults[i] === true ? 'bg-[#16a34a] text-white' : 'bg-green-50 text-green-700 hover:bg-green-100 border border-green-200'
-                }`}>
-                ✅ Got It
-              </button>
-              <button onClick={() => setResult(i, false)}
-                className={`px-3 py-1.5 rounded-lg text-sm font-bold transition-all ${
-                  playerResults[i] === false ? 'bg-[#dc2626] text-white' : 'bg-red-50 text-red-600 hover:bg-red-100 border border-red-200'
-                }`}>
-                ❌ Missed
-              </button>
-            </div>
-          </div>
-        ))}
+      <div className="flex gap-3">
+        <button onClick={() => advance(true)}
+          className="flex-1 py-4 bg-[#16a34a] text-white rounded-xl font-bold text-lg hover:brightness-110 transition-all shadow-[0_2px_0_#166534]">
+          ✅ Got It (+1)
+        </button>
+        <button onClick={() => advance(false)}
+          className="flex-1 py-4 bg-[#dc2626] text-white rounded-xl font-bold text-lg hover:brightness-110 transition-all shadow-[0_2px_0_#991b1b]">
+          ❌ Missed
+        </button>
       </div>
 
-      <button onClick={nextRound} disabled={!allResultsIn}
-        className={`${btn} w-full bg-[var(--accent)] text-white mb-2 shadow-[0_2px_0_#b83208] disabled:opacity-40`}>
-        Next Round →
-      </button>
-      {!allResultsIn && (
-        <p className="text-xs text-center text-[var(--muted)] font-semibold mb-4">
-          Mark every player before continuing.
-        </p>
-      )}
-
-      <button onClick={endGame} className="block mx-auto mt-2 text-sm font-bold text-[var(--muted)] hover:text-[var(--accent)]">
-        End Game
-      </button>
-
-      <div className="mt-6">
-        <Scoreboard players={players} scores={scores} />
-      </div>
+      {players.length > 1 && <Scoreboard players={players} scores={scores} />}
     </main>
   )
 
