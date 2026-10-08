@@ -35,7 +35,7 @@ const CATEGORIES = [
   {
     label: 'Kids n Play',
     emoji: '🪁',
-    games: KIDS_GAMES.map(game => ({ name: game.name, slug: game.slug, desc: 'Play together in person' })),
+    games: KIDS_GAMES.map(game => ({ name: game.name, slug: game.slug, desc: game.description })),
   },
 ]
 

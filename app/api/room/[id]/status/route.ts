@@ -3,14 +3,22 @@ import prisma from '@/lib/db'
 
 export const dynamic = 'force-dynamic'
 
+const TWO_HOURS_MS = 2 * 60 * 60 * 1000
+
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
-  const session = await prisma.gameSession.findUnique({
+  let session = await prisma.gameSession.findUnique({
     where: { id: params.id },
     include: { players: { orderBy: { joinedAt: 'asc' } } },
   })
 
   if (!session) {
     return NextResponse.json(null, { status: 404 })
+  }
+
+  // Auto-close games that have been active for more than 2 hours.
+  if (session.status === 'active' && Date.now() - session.createdAt.getTime() > TWO_HOURS_MS) {
+    await prisma.gameSession.update({ where: { id: params.id }, data: { status: 'completed' } })
+    session = { ...session, status: 'completed' }
   }
 
   return NextResponse.json(

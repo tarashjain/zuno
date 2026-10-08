@@ -45,27 +45,63 @@ export default async function History() {
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {gameSessions.map(gameSession => {
-            const scoreCount = gameSession.players.reduce((count, player) => count + player.scores.length, 0)
+            const isCompleted = gameSession.status === 'completed'
+            const topScores = gameSession.players.map(p => ({
+              name: p.guestName,
+              total: p.scores.reduce((sum, s) => sum + s.points, 0),
+              isWinner: p.scores.some(s => s.notes === 'winner'),
+            })).sort((a, b) => b.total - a.total)
+            const maxTotal = topScores[0]?.total ?? 0
+            const hasScores = topScores.some(p => p.total > 0 || p.isWinner)
+
             return (
               <Link
                 key={gameSession.id}
                 href={`/room/${gameSession.id}`}
-                className="group bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 hover:border-[var(--accent)] hover:bg-[var(--surface2)] transition-all"
+                className="group bg-[var(--surface)] border border-[var(--border)] rounded-2xl p-5 hover:border-[var(--accent)] hover:bg-[var(--surface2)] transition-all flex flex-col"
               >
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div className="text-2xl">🎮</div>
-                  <span className="text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-full bg-[var(--surface2)] text-[var(--muted)]">
-                    {gameSession.status}
+                  <span className={`text-[10px] uppercase tracking-widest font-bold px-2 py-1 rounded-full ${
+                    isCompleted
+                      ? 'bg-green-100 text-green-700'
+                      : gameSession.status === 'active'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-[var(--surface2)] text-[var(--muted)]'
+                  }`}>
+                    {isCompleted ? 'Ended' : gameSession.status}
                   </span>
                 </div>
+
                 <div className="font-bold text-base mb-1">{gameSession.game.name}</div>
-                <div className="text-xs text-[var(--muted)] font-medium space-y-1">
-                  <p>{gameSession.players.length} player{gameSession.players.length !== 1 ? 's' : ''}</p>
-                  <p>{scoreCount} recorded score{scoreCount !== 1 ? 's' : ''}</p>
-                  <p>{new Date(gameSession.createdAt).toLocaleDateString()}</p>
+                <div className="text-xs text-[var(--muted)] font-medium mb-3">
+                  {new Date(gameSession.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
+                  {' · '}{gameSession.players.length} player{gameSession.players.length !== 1 ? 's' : ''}
                 </div>
-                <div className="mt-4 text-xs font-bold text-[var(--accent)] flex items-center gap-1">
-                  Open game <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
+
+                {isCompleted && hasScores ? (
+                  <ul className="space-y-1 mb-3 flex-1">
+                    {topScores.slice(0, 4).map((p, i) => (
+                      <li key={p.name} className="flex items-center justify-between text-xs">
+                        <span className="font-semibold truncate max-w-[130px]">
+                          {i === 0 && maxTotal > 0 ? '🏆 ' : p.isWinner && maxTotal === 0 ? '🏆 ' : ''}{p.name}
+                        </span>
+                        <span className="font-bold text-[var(--text)] ml-2 shrink-0">
+                          {maxTotal > 0 ? `${p.total} pts` : p.isWinner ? 'Winner' : '—'}
+                        </span>
+                      </li>
+                    ))}
+                    {topScores.length > 4 && (
+                      <li className="text-[10px] text-[var(--muted)]">+{topScores.length - 4} more</li>
+                    )}
+                  </ul>
+                ) : (
+                  <div className="flex-1" />
+                )}
+
+                <div className="mt-auto text-xs font-bold text-[var(--accent)] flex items-center gap-1">
+                  {isCompleted ? 'View summary' : gameSession.status === 'active' ? 'Continue' : 'Rejoin'}
+                  <span className="group-hover:translate-x-1 transition-transform inline-block">→</span>
                 </div>
               </Link>
             )
