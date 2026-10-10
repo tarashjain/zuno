@@ -15,6 +15,7 @@ const GAME_NAMES: Record<string, string> = {
   'score-keeper': 'Score Keeper',
   'wavelength': 'Wavelength',
   'scrabble': 'Scrabble',
+  'bollywood-beats': 'Bollywood Beats',
 }
 
 export default async function NewRoom({
