@@ -103,6 +103,22 @@ const GAME_INFO: Record<string, { name: string; emoji: string; description: stri
       'Highest final score wins.',
     ],
   },
+  'bollywood-beats': {
+    name: 'Bollywood Beats',
+    emoji: '🎬',
+    description: 'Act out Bollywood songs through mime — no speaking, no humming. The team with the most cards wins.',
+    rules: [
+      'Split into 2 teams. The team whose player most recently watched a Bollywood movie goes first.',
+      'The acting player spins the wheel to pick an era: 1950s–80s, 1990s, 2000–2009, or 2010–Now.',
+      'They look at their song card secretly, then act it out silently — 60 seconds on the clock.',
+      'If their team guesses the song in time, they keep the card. If not, it\'s discarded.',
+      'Then the other team spins. Players rotate turns within their team.',
+      'Play until all cards are used, or agree on a set number of rounds. Most cards wins.',
+      'Allowed: gestures, miming actions, breaking the title into parts, doing the hook step.',
+      'Not allowed: speaking, humming, making sounds, pointing at objects, hand-signing letters.',
+      'Tiebreak: one extra round each.',
+    ],
+  },
   'score-keeper': {
     name: 'Score Keeper',
     emoji: '📝',
