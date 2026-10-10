@@ -49,6 +49,14 @@ model WavelengthSpectrum {
   rightLabel String
 }
 
+// Bollywood Beats — songs grouped by era for the charades game.
+model BollywoodSong {
+  id    Int    @id @default(autoincrement())
+  title String
+  movie String
+  era   String // "1950s-80s" | "1990s" | "2000s" | "2010s"
+}
+
 model GameSession {
   id         String          @id @default(uuid())
   code       String          @unique // short join code, all-letters or all-digits (see lib/room-code.ts)

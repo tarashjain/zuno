@@ -3,6 +3,7 @@ import { FIVE_SECOND_RULE_GENERAL_CARDS } from './five-second-rule-cards'
 import { BOLLYWOOD_WORDS } from './bollywood-words'
 import { IMPOSTER_PAIRS } from './imposter-pairs'
 import { WAVELENGTH_SPECTRA } from './wavelength-spectra'
+import { BOLLYWOOD_SONGS } from './bollywood-songs'
 
 const prisma = new PrismaClient()
 
@@ -51,6 +52,13 @@ async function main() {
     create: { name: 'Wavelength', slug: 'wavelength' },
   })
 
+  // Bollywood Beats
+  await prisma.game.upsert({
+    where: { slug: 'bollywood-beats' },
+    update: {},
+    create: { name: 'Bollywood Beats', slug: 'bollywood-beats' },
+  })
+
   // Clear and re-seed each game's own dedicated word bank
   await prisma.fiveSecondRuleCard.deleteMany()
   await prisma.fiveSecondRuleCard.createMany({
@@ -71,6 +79,9 @@ async function main() {
   await prisma.wavelengthSpectrum.createMany({
     data: WAVELENGTH_SPECTRA.map(([leftLabel, rightLabel]) => ({ leftLabel, rightLabel })),
   })
+
+  await prisma.bollywoodSong.deleteMany()
+  await prisma.bollywoodSong.createMany({ data: BOLLYWOOD_SONGS })
 
   console.log('✅ Seed complete!')
 }
