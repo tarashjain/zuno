@@ -14,11 +14,30 @@ const ERA_META: Record<string, { label: string; color: string; light: string }> 
   '2000s':     { label: '2000–2009', color: '#3b82f6', light: '#93c5fd' },
   '2010s':     { label: '2010–Now',  color: '#10b981', light: '#6ee7b7' },
 }
-// 8 conic sections: Era1 Era2 Era3 Era4 Era1 Era2 Era3 Era4
-const WHEEL_BG = `conic-gradient(
-  #f59e0b 0deg 45deg,#ec4899 45deg 90deg,#3b82f6 90deg 135deg,#10b981 135deg 180deg,
-  #fbbf24 180deg 225deg,#f9a8d4 225deg 270deg,#93c5fd 270deg 315deg,#6ee7b7 315deg 360deg
-)`
+// 8 SVG wheel sectors: Era1 Era2 Era3 Era4 (dark), Era1 Era2 Era3 Era4 (darker alt)
+const WHEEL_SECTORS = [
+  { color: '#f59e0b', era: '1950s-80s', label: '50s–80s' },
+  { color: '#ec4899', era: '1990s',     label: '1990s' },
+  { color: '#3b82f6', era: '2000s',     label: '2000s' },
+  { color: '#10b981', era: '2010s',     label: '2010+' },
+  { color: '#b45309', era: '1950s-80s', label: '50s–80s' },
+  { color: '#9d174d', era: '1990s',     label: '1990s' },
+  { color: '#1d4ed8', era: '2000s',     label: '2000s' },
+  { color: '#065f46', era: '2010s',     label: '2010+' },
+]
+const W_CX = 150, W_CY = 150, W_R = 140
+const wRad = (d: number) => (d - 90) * Math.PI / 180
+const sectorPath = (i: number) => {
+  const s = i * 45, e = s + 45
+  const x1 = W_CX + W_R * Math.cos(wRad(s)), y1 = W_CY + W_R * Math.sin(wRad(s))
+  const x2 = W_CX + W_R * Math.cos(wRad(e)), y2 = W_CY + W_R * Math.sin(wRad(e))
+  return `M${W_CX},${W_CY} L${x1.toFixed(2)},${y1.toFixed(2)} A${W_R},${W_R},0,0,1,${x2.toFixed(2)},${y2.toFixed(2)}Z`
+}
+const labelAt = (i: number) => {
+  const mid = i * 45 + 22.5
+  const r = 95
+  return { x: W_CX + r * Math.cos(wRad(mid)), y: W_CY + r * Math.sin(wRad(mid)), rot: mid }
+}
 const TIMER_SECS = 60
 
 function shuffle<T>(arr: T[]): T[] {
@@ -122,7 +141,7 @@ export default function BollywoodBeatsBoard({ players: roomPlayers = [] }: { pla
       }
       setCurrentSong(song)
       setPhase('reveal')
-    }, 3500)
+    }, 4200)
   }
 
   useEffect(() => {
@@ -247,63 +266,98 @@ export default function BollywoodBeatsBoard({ players: roomPlayers = [] }: { pla
   // ─── SPIN ─────────────────────────────────────────────────────────────────
   if (phase === 'spin') {
     return (
-      <div className="flex flex-col items-center gap-6">
+      <div className="flex flex-col items-center gap-5">
+        {/* Scoreboard */}
         <div className="text-center">
-          <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-1">{teamName}'s turn</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)] mb-0.5">{teamName}'s turn</p>
           <h2 className="text-2xl font-black">{actor} is acting</h2>
-          <div className="flex gap-6 mt-3 justify-center">
+          <div className="flex gap-6 mt-2 justify-center">
             <span className="text-sm font-bold">🃏 {teamAName}: <span className="text-[var(--accent)]">{teamACards}</span></span>
             <span className="text-sm font-bold">🃏 {teamBName}: <span className="text-[var(--accent)]">{teamBCards}</span></span>
           </div>
         </div>
 
         {/* Spinner */}
-        <div className="relative w-64 h-64">
-          {/* Pointer */}
-          <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-2 z-10 w-0 h-0"
-            style={{ borderLeft: '10px solid transparent', borderRight: '10px solid transparent', borderTop: '22px solid var(--ink)' }} />
-          {/* Wheel */}
-          <div
-            className="w-64 h-64 rounded-full border-4 border-[var(--ink)] shadow-xl"
-            style={{
-              background: WHEEL_BG,
-              transform: `rotate(${rotation}deg)`,
-              transition: spinning ? 'transform 3.5s cubic-bezier(0.17,0.67,0.12,1)' : 'none',
-            }}
-          />
-          {/* Era labels (rotate opposite to keep readable) */}
-          {ERA_ORDER.map((era, i) => {
-            const angle = i * 90 + 45 // center of combined era pair (slots 0+4 cover 0°-45° and 180°-225°, average at 22.5°)
-            // Place at 22.5° + i*90°
-            const labelAngle = i * 90 + 22.5
-            const rad = (labelAngle - 90) * Math.PI / 180
-            const r = 88
-            const x = 128 + r * Math.cos(rad)
-            const y = 128 + r * Math.sin(rad)
-            return null // labels inside spinning wheel are hard to read; skip
-            void angle
-          })}
-          {/* Center dot */}
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-6 h-6 rounded-full bg-[var(--ink)]" />
+        <div className="relative" style={{ width: 300, height: 300 }}>
+          {/* Pointer needle */}
+          <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ top: -8 }}>
+            <svg width="28" height="38" viewBox="0 0 28 38">
+              <polygon points="14,38 1,4 27,4" fill="#1a1a1a" />
+              <polygon points="14,34 4,6 14,6" fill="rgba(255,255,255,0.25)" />
+              <polygon points="14,4 1,4 27,4" fill="white" />
+            </svg>
           </div>
+
+          {/* Outer glow ring */}
+          <div className="absolute inset-0 rounded-full"
+            style={{ boxShadow: spinning ? '0 0 40px rgba(0,0,0,0.25)' : '0 0 20px rgba(0,0,0,0.15)', transition: 'box-shadow 0.5s' }} />
+
+          {/* SVG wheel */}
+          <svg
+            width="300" height="300" viewBox="0 0 300 300"
+            style={{
+              transform: `rotate(${rotation}deg)`,
+              transition: spinning ? 'transform 4.2s cubic-bezier(0.12, 0.8, 0.15, 1)' : 'none',
+              filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.3))',
+            }}
+          >
+            {/* Sectors */}
+            {WHEEL_SECTORS.map((s, i) => {
+              const lp = labelAt(i)
+              const isLanded = !spinning && selectedEra === s.era
+              return (
+                <g key={i}>
+                  <path d={sectorPath(i)} fill={s.color}
+                    stroke={isLanded ? 'white' : 'rgba(255,255,255,0.3)'} strokeWidth={isLanded ? 3 : 1.5} />
+                  <text
+                    x={lp.x} y={lp.y}
+                    textAnchor="middle" dominantBaseline="middle"
+                    fill="white" fontSize="11.5" fontWeight="800"
+                    transform={`rotate(${lp.rot}, ${lp.x}, ${lp.y})`}
+                    style={{ userSelect: 'none', textShadow: '0 1px 3px rgba(0,0,0,0.6)', letterSpacing: '0.3px' }}
+                  >
+                    {s.label}
+                  </text>
+                </g>
+              )
+            })}
+
+            {/* Spoke lines */}
+            {[0,1,2,3,4,5,6,7].map(i => {
+              const a = wRad(i * 45)
+              return (
+                <line key={i}
+                  x1={W_CX} y1={W_CY}
+                  x2={+(W_CX + W_R * Math.cos(a)).toFixed(2)}
+                  y2={+(W_CY + W_R * Math.sin(a)).toFixed(2)}
+                  stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"
+                />
+              )
+            })}
+
+            {/* Outer ring */}
+            <circle cx={W_CX} cy={W_CY} r={W_R} fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="3" />
+
+            {/* Center hub */}
+            <circle cx={W_CX} cy={W_CY} r={18} fill="#1a1a1a" />
+            <circle cx={W_CX} cy={W_CY} r={11} fill="white" />
+            <circle cx={W_CX} cy={W_CY} r={5}  fill="#1a1a1a" />
+          </svg>
         </div>
 
-        {/* Era legend */}
-        <div className="grid grid-cols-2 gap-2 w-full max-w-xs">
-          {ERA_ORDER.map(era => (
-            <div key={era} className="flex items-center gap-2 text-xs font-bold">
-              <span className="w-3 h-3 rounded-sm shrink-0" style={{ background: ERA_META[era].color }} />
-              {ERA_META[era].label}
-            </div>
-          ))}
-        </div>
+        {/* Selected era badge (shown after landing) */}
+        {selectedEra && !spinning && (
+          <div className="px-5 py-2 rounded-full text-white font-black text-sm animate-bounce"
+            style={{ background: ERA_META[selectedEra].color }}>
+            {ERA_META[selectedEra].label} 🎬
+          </div>
+        )}
 
         <button
           onClick={spin} disabled={spinning}
-          className="px-10 py-4 bg-[var(--accent)] text-white font-black text-xl rounded-2xl hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_3px_0_#b83208]"
+          className="px-12 py-4 bg-[var(--accent)] text-white font-black text-xl rounded-2xl hover:brightness-110 disabled:opacity-50 transition-all shadow-[0_4px_0_#b83208] active:translate-y-1 active:shadow-[0_2px_0_#b83208]"
         >
-          {spinning ? 'Spinning…' : '🎯 Spin!'}
+          {spinning ? '🌀 Spinning…' : '🎯 Spin!'}
         </button>
       </div>
     )
