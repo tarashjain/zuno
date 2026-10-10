@@ -425,7 +425,7 @@ export default function BollywoodBeatsBoard() {
       <div className="text-6xl">{winner ? '🏆' : '🤝'}</div>
       <h2 className="text-4xl font-black">{winner ? `${winner} wins!` : "It's a tie!"}</h2>
       <div className="w-full bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl divide-y divide-[var(--border)]">
-        {([{ name: teamAName, cards: teamACards }, { name: teamBName, cards: teamBCards }] as const)
+        {[{ name: teamAName, cards: teamACards }, { name: teamBName, cards: teamBCards }]
           .sort((a, b) => b.cards - a.cards)
           .map((t, i) => (
             <div key={t.name} className={`flex items-center justify-between px-5 py-4 ${i === 0 && winner ? 'bg-yellow-50' : ''}`}>
