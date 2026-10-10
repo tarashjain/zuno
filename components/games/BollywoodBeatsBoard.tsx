@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from 'react'
 import { getAllBollywoodSongs } from '@/app/actions/bollywood-beats'
 
 type Song = { id: number; title: string; movie: string; era: string }
+type Player = { id: number; guestName: string }
 type Phase = 'setup' | 'spin' | 'reveal' | 'revealed' | 'acting' | 'result' | 'gameover'
 type Team = 'A' | 'B'
 
@@ -29,14 +30,13 @@ function shuffle<T>(arr: T[]): T[] {
   return a
 }
 
-export default function BollywoodBeatsBoard() {
+export default function BollywoodBeatsBoard({ players: roomPlayers = [] }: { players?: Player[] }) {
   // Setup
   const [teamAName, setTeamAName] = useState('Team A')
   const [teamBName, setTeamBName] = useState('Team B')
-  const [teamAPlayers, setTeamAPlayers] = useState<string[]>([])
-  const [teamBPlayers, setTeamBPlayers] = useState<string[]>([])
-  const [inputA, setInputA] = useState('')
-  const [inputB, setInputB] = useState('')
+  const [assignments, setAssignments] = useState<Record<number, Team | null>>(() =>
+    Object.fromEntries(roomPlayers.map(p => [p.id, null]))
+  )
   const [maxRounds, setMaxRounds] = useState('')
 
   // Game
@@ -62,6 +62,9 @@ export default function BollywoodBeatsBoard() {
 
   // Keep ref in sync so setTimeout callbacks see fresh pool
   useEffect(() => { poolRef.current = pool }, [pool])
+
+  const teamAPlayers = roomPlayers.filter(p => assignments[p.id] === 'A').map(p => p.guestName)
+  const teamBPlayers = roomPlayers.filter(p => assignments[p.id] === 'B').map(p => p.guestName)
 
   const actor = currentTeam === 'A'
     ? teamAPlayers[actorIdxA % Math.max(teamAPlayers.length, 1)]
@@ -155,65 +158,72 @@ export default function BollywoodBeatsBoard() {
     setPhase('spin')
   }
 
-  function addPlayer(team: Team) {
-    const val = (team === 'A' ? inputA : inputB).trim()
-    if (!val) return
-    if (team === 'A') { setTeamAPlayers(p => [...p, val]); setInputA('') }
-    else { setTeamBPlayers(p => [...p, val]); setInputB('') }
-  }
-
   // ─── SETUP ────────────────────────────────────────────────────────────────
   if (phase === 'setup') {
     const canStart = teamAPlayers.length > 0 && teamBPlayers.length > 0
-    const TeamInput = ({ team }: { team: Team }) => {
-      const isA = team === 'A'
-      const players = isA ? teamAPlayers : teamBPlayers
-      const input = isA ? inputA : inputB
-      const setInput = isA ? setInputA : setInputB
-      const name = isA ? teamAName : teamBName
-      const setName = isA ? setTeamAName : setTeamBName
-      const setPlayers = isA
-        ? (fn: (p: string[]) => string[]) => setTeamAPlayers(fn)
-        : (fn: (p: string[]) => string[]) => setTeamBPlayers(fn)
-      const color = isA ? '#3b82f6' : '#ec4899'
-      return (
-        <div className="bg-[var(--surface)] border-2 border-[var(--border)] rounded-2xl p-5">
-          <input
-            value={name} onChange={e => setName(e.target.value)}
-            className="text-lg font-black mb-3 block w-full bg-transparent outline-none border-b-2 border-[var(--border)] pb-1 focus:border-[var(--accent)]"
-          />
-          <div className="flex gap-2 mb-3">
-            <input
-              value={input} onChange={e => setInput(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && addPlayer(team)}
-              placeholder="Add player name"
-              className="flex-1 border-2 border-[var(--border)] rounded-xl px-3 py-2 text-sm font-semibold bg-[var(--paper)] outline-none focus:border-[var(--accent)]"
-            />
-            <button
-              onClick={() => addPlayer(team)}
-              style={{ background: color }}
-              className="px-3 py-2 text-white font-black rounded-xl text-sm"
-            >+</button>
-          </div>
-          {players.map((p, i) => (
-            <div key={i} className="flex items-center justify-between px-3 py-2 bg-[var(--cream)] rounded-xl mb-1.5 text-sm font-semibold">
-              <span>{p}</span>
-              <button onClick={() => setPlayers(prev => prev.filter((_, j) => j !== i))} className="text-[var(--muted)] hover:text-red-500 text-xs font-bold">✕</button>
+
+    const toggle = (id: number) =>
+      setAssignments(prev => ({ ...prev, [id]: prev[id] === 'A' ? 'B' : prev[id] === 'B' ? null : 'A' }))
+
+    const randomize = () => {
+      const ids = roomPlayers.map(p => p.id).sort(() => Math.random() - 0.5)
+      const next: Record<number, Team | null> = {}
+      ids.forEach((id, i) => { next[id] = i < Math.ceil(ids.length / 2) ? 'A' : 'B' })
+      setAssignments(next)
+    }
+
+    return (
+      <div className="max-w-lg mx-auto">
+        <h2 className="text-3xl font-black mb-1">🎬 Bollywood Beats</h2>
+        <p className="text-[var(--muted)] text-sm mb-6">Assign players to teams, then start.</p>
+
+        {/* Team name inputs */}
+        <div className="grid grid-cols-2 gap-3 mb-5">
+          {(['A', 'B'] as Team[]).map(t => (
+            <div key={t} className="flex items-center gap-2 px-3 py-2 rounded-xl border-2 border-[var(--border)]"
+              style={{ borderColor: t === 'A' ? '#3b82f6' : '#ec4899' }}>
+              <span className="w-3 h-3 rounded-full shrink-0" style={{ background: t === 'A' ? '#3b82f6' : '#ec4899' }} />
+              <input
+                value={t === 'A' ? teamAName : teamBName}
+                onChange={e => t === 'A' ? setTeamAName(e.target.value) : setTeamBName(e.target.value)}
+                className="font-black bg-transparent outline-none w-full text-sm"
+              />
             </div>
           ))}
-          {players.length === 0 && <p className="text-xs text-[var(--muted)] text-center py-2">No players yet</p>}
         </div>
-      )
-    }
-    return (
-      <div className="max-w-xl mx-auto">
-        <h2 className="text-3xl font-black mb-1">🎬 Bollywood Beats</h2>
-        <p className="text-[var(--muted)] text-sm mb-6">Act out Bollywood songs — no speaking, no humming!</p>
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <TeamInput team="A" />
-          <TeamInput team="B" />
+
+        {/* Player cards */}
+        {roomPlayers.length === 0 ? (
+          <div className="text-center py-8 text-[var(--muted)] text-sm font-semibold border-2 border-dashed border-[var(--border)] rounded-2xl mb-5">
+            No players in the room yet. Add players from the lobby.
+          </div>
+        ) : (
+          <div className="space-y-2 mb-5">
+            {roomPlayers.map(p => {
+              const team = assignments[p.id]
+              const color = team === 'A' ? '#3b82f6' : team === 'B' ? '#ec4899' : undefined
+              const label = team === 'A' ? teamAName : team === 'B' ? teamBName : 'Unassigned'
+              return (
+                <button key={p.id} onClick={() => toggle(p.id)}
+                  className="w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-all font-semibold text-sm"
+                  style={{ borderColor: color ?? 'var(--border)', background: color ? `${color}18` : 'var(--surface)' }}>
+                  <span className="font-bold">{p.guestName}</span>
+                  <span className="text-xs font-black px-2 py-0.5 rounded-full text-white"
+                    style={{ background: color ?? 'var(--muted)' }}>{label}</span>
+                </button>
+              )
+            })}
+          </div>
+        )}
+
+        <div className="flex gap-3 mb-5">
+          <button onClick={randomize}
+            className="flex-1 py-2 border-2 border-[var(--border)] rounded-xl text-sm font-bold hover:border-[var(--accent)] transition-all">
+            🎲 Randomize Teams
+          </button>
         </div>
-        <div className="flex items-center gap-3 mb-6">
+
+        <div className="flex items-center gap-3 mb-5">
           <label className="text-sm font-bold text-[var(--muted)] whitespace-nowrap">Rounds per team</label>
           <input
             type="text" inputMode="numeric" value={maxRounds}
@@ -222,12 +232,14 @@ export default function BollywoodBeatsBoard() {
             className="flex-1 border-2 border-[var(--border)] rounded-xl px-3 py-2 text-sm font-semibold bg-[var(--paper)] outline-none focus:border-[var(--accent)]"
           />
         </div>
-        <button
-          onClick={startGame} disabled={!canStart}
-          className="w-full py-4 bg-[var(--accent)] text-white font-black text-lg rounded-2xl hover:brightness-110 disabled:opacity-40 transition-all shadow-[0_3px_0_#b83208]"
-        >
+
+        <button onClick={startGame} disabled={!canStart}
+          className="w-full py-4 bg-[var(--accent)] text-white font-black text-lg rounded-2xl hover:brightness-110 disabled:opacity-40 transition-all shadow-[0_3px_0_#b83208]">
           Start Game →
         </button>
+        {!canStart && roomPlayers.length > 0 && (
+          <p className="text-center text-xs text-[var(--muted)] mt-2">Assign at least one player to each team to start.</p>
+        )}
       </div>
     )
   }
@@ -441,6 +453,7 @@ export default function BollywoodBeatsBoard() {
           setActorIdxA(0); setActorIdxB(0)
           setRoundsA(0); setRoundsB(0)
           setPool({}); setSelectedEra(null); setCurrentSong(null); setGotIt(null)
+          setAssignments(Object.fromEntries(roomPlayers.map(p => [p.id, null])))
         }}
         className="w-full py-3 border-2 border-[var(--border)] font-bold rounded-2xl hover:border-[var(--accent)] transition-all"
       >
