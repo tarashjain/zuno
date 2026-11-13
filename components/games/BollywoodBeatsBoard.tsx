@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect, useRef } from 'react'
 import { getAllBollywoodSongs } from '@/app/actions/bollywood-beats'
+import { getSpinRotation, SPIN_DURATION_MS } from '@/lib/bollywood-beats'
 
 type Song = { id: number; title: string; movie: string; era: string }
 type Player = { id: number; guestName: string }
@@ -120,12 +121,8 @@ export default function BollywoodBeatsBoard({ players: roomPlayers = [] }: { pla
 
     // Determine landing angle: pick one of 2 slots for this era
     const slot = Math.random() < 0.5 ? eraIdx : eraIdx + 4
-    const slotCenter = slot * 45 + 22.5
     const jitter = (Math.random() - 0.5) * 20
-    const prevMod = rotation % 360
-    const delta = ((slotCenter + jitter) - prevMod + 360) % 360
-    const newRotation = rotation + 360 * 5 + delta
-    setRotation(newRotation)
+    setRotation(getSpinRotation(rotation, slot, jitter))
 
     setTimeout(() => {
       setSpinning(false)
@@ -141,7 +138,7 @@ export default function BollywoodBeatsBoard({ players: roomPlayers = [] }: { pla
       }
       setCurrentSong(song)
       setPhase('reveal')
-    }, 4200)
+    }, SPIN_DURATION_MS)
   }
 
   useEffect(() => {
@@ -290,15 +287,24 @@ export default function BollywoodBeatsBoard({ players: roomPlayers = [] }: { pla
 
           {/* Outer glow ring */}
           <div className="absolute inset-0 rounded-full"
-            style={{ boxShadow: spinning ? '0 0 40px rgba(0,0,0,0.25)' : '0 0 20px rgba(0,0,0,0.15)', transition: 'box-shadow 0.5s' }} />
+            style={{
+              boxShadow: spinning
+                ? '0 0 42px rgba(0,0,0,0.22), 0 0 14px rgba(255,255,255,0.42)'
+                : '0 8px 24px rgba(0,0,0,0.16)',
+              transition: 'box-shadow 700ms ease',
+            }} />
 
           {/* SVG wheel */}
           <svg
             width="300" height="300" viewBox="0 0 300 300"
             style={{
               transform: `rotate(${rotation}deg)`,
-              transition: spinning ? 'transform 4.2s cubic-bezier(0.12, 0.8, 0.15, 1)' : 'none',
-              filter: 'drop-shadow(0 4px 16px rgba(0,0,0,0.3))',
+              transition: spinning
+                ? `transform ${SPIN_DURATION_MS}ms cubic-bezier(0.12, 0.72, 0.12, 1), filter 700ms ease`
+                : 'filter 700ms ease',
+              filter: spinning
+                ? 'drop-shadow(0 8px 22px rgba(0,0,0,0.28))'
+                : 'drop-shadow(0 5px 14px rgba(0,0,0,0.2))',
             }}
           >
             {/* Sectors */}
