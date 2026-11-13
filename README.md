@@ -13,6 +13,7 @@ A real-time multiplayer party game platform. Play word games, card games, and di
 - **Judgement** — Predict tricks in a card game
 - **100 Points** — Reach 100 points first (card game)
 - **Score Keeper** — Track and display game scores
+- **Cashier** — Manage a local poker table’s buy-ins, rebuys, transfers, and cash-outs
 - 🤐 **Don’t Say Yes or No** — Kids n Play: answer aloud without saying either word
 - 🙃 **Wrong Answers Only** — Kids n Play: give silly, incorrect answers to stay in
 
@@ -20,13 +21,32 @@ Kids n Play games are local only: 2–8 players share one device, with question 
 turns, elimination, and a winner. No sign-in or database seed is needed for these games.
 Game progress stays in browser memory and resets when you leave or refresh the page.
 
+### Tiny Decision
+
+Choose between 2–12 options at `/tiny-decision`. Equal chances are the default, or
+set custom percentages that total 100%. Invalid probabilities show an inline error.
+Each pick has an animated reveal and one of 10 randomly chosen funny verdicts;
+reduced-motion preferences are respected. No sign-in is needed.
+
 ### Play Modes
 - **Local** (Pass & Play) — One device, players pass it around
 - **Share Code** — Remote play via room code, shareable by message or WhatsApp (all-letters e.g. `HKMPQR`, or all-digits e.g. `837294`)
 
+Cashier is local only: one signed-in manager controls the table. Its records are
+saved in the database, require a connection to save, and have no automatic expiry.
+
 ### Authentication
 - Create an account to save scores and host rooms
-- Sign in to join existing rooms
+- Guests can join share-code rooms with a name; a signed cookie identifies their player
+- Hosts can issue private recovery links for guests who lose access
+
+### Updates — November 13, 2026
+
+- Added **Cashier** under Card Games, using the same game-page layout, orange buttons, and cream-and-white panels as the other card games.
+- Added **Tiny Decision** with equal or custom probabilities, validation errors, animated results, and 10 random funny verdicts.
+- Placed Tiny Decision after Score Keeper in desktop and mobile navigation, added its icon, and fixed Score Keeper’s orange active-page highlight.
+- Hardened room authorization and game actions, added host-controlled guest recovery and lobby removal, and prevented failed joins from leaving orphaned players.
+- Added regression coverage for room access, recovery, join failures, Cashier accounting, concurrent updates, and expiry rules. All 28 tests, TypeScript checks, and the production build passed for these changes.
 
 ## 🚀 Quick Start
 
@@ -96,6 +116,22 @@ Game progress stays in browser memory and resets when you leave or refresh the p
 4. Vote on who is the imposter
 5. Reveal and score!
 
+### Cashier (Local Table Manager)
+
+1. Sign in, open **Card Games → Cashier** (`/games/cashier`), and select **New Game**.
+2. Enter a table name, unit or currency label, starting buy-in **per player**, and 1–20 player names. The total starting buy-in is calculated automatically.
+3. Record a standard rebuy or a custom amount, and add players during the game.
+4. Transfer recorded buy-ins between players or the bank. **Remove & transfer** archives a player and transfers their recorded buy-ins to another player or the bank, retaining the history.
+5. Enter final cash-outs to record profit or loss. Payouts cannot exceed the bank’s available balance.
+6. Use **Undo last transaction** to correct mistakes, inspect the transaction history, or export a CSV summary.
+7. Reopen a saved table from Cashier or **My Games**. Cashier tables and Score Keeper games are exempt from the automatic two-hour active-room expiry.
+
+Buy-ins record amounts taken, not chip stacks after each hand. Transfers reassign
+recorded buy-ins without adding money. Bank available equals total buy-ins minus
+cash-outs. Only the table’s signed-in manager can view or update its ledger.
+Cashier uses the existing database schema and registers its game entry when the
+first table is created; no Cashier-specific migration or seed is needed.
+
 ## 🛠️ Development
 
 ### Architecture
@@ -126,9 +162,15 @@ Game progress stays in browser memory and resets when you leave or refresh the p
 ```
 
 ### Running Tests
+
 ```bash
 npm run test
+npx tsc --noEmit
+npm run build
 ```
+
+The regression suite covers signed player tokens, guest recovery, room permissions,
+failed-join rollback, and Cashier ledger operations, including stale-write protection.
 
 ### Database Migrations
 ```bash
@@ -146,8 +188,10 @@ npx prisma db push --skip-generate --force-reset
 
 - Passwords are hashed with bcrypt
 - Sessions are secure and HTTP-only
-- Room access is controlled by room code + user auth
+- Room access uses host authentication or a signed, room-specific guest cookie; a room code alone does not authorize game updates
 - Game state is validated on the server
+- Guest joins validate signing configuration before inserting a player and roll back creation if signing or setting the cookie fails
+- Legacy unsigned player IDs are rejected; hosts can restore guest access with a private recovery link or remove stranded players from the lobby
 
 ## 📦 Deployment
 
@@ -200,6 +244,12 @@ MIT — Feel free to use, modify, and share!
 - Run `npx prisma db push` to sync schema
 - Run `npm run db:seed` to populate game data
 - Check browser console for errors
+
+### Guest Access or Join Problems
+
+- Configure `NEXTAUTH_SECRET` before starting the app; it is required for both authentication and signed guest cookies.
+- If an existing guest loses access, the host can create a private recovery link from the lobby or active share-code game. Links expire after 10 minutes; share them only with the intended player.
+- If a stranded player is blocking a lobby, the host can remove them so they can rejoin. Legacy unsigned cookies are not automatically trusted.
 
 ## 📧 Support
 
