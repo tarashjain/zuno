@@ -24,6 +24,7 @@ export default async function NewRoom({
   searchParams: { game?: string; mode?: string }
 }) {
   const gameSlug = searchParams.game
+  if (gameSlug === 'cashier') redirect('/games/cashier/new')
   const mode = searchParams.mode === 'local' ? 'local' : 'individual'
 
   if (gameSlug && getKidsGame(gameSlug)) {

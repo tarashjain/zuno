@@ -5,8 +5,22 @@ import { getKidsGame } from '@/lib/kids-games'
 import KidsGameDetails from '@/components/games/KidsGameDetails'
 import { getKidsHistory } from '@/app/actions/kids-session'
 import type { KidsSessionHistory } from '@/app/actions/kids-session'
+import CashierHistory from '@/components/games/CashierHistory'
 
 const GAME_INFO: Record<string, { name: string; emoji: string; description: string; rules: string[] }> = {
+  cashier: {
+    name: 'Cashier',
+    emoji: '🃏',
+    description: 'Keep every buy-in, rebuy, and cash-out accounted for. One person manages the whole table.',
+    rules: [
+      'Set a starting buy-in per player, choose the number of players, and enter their names. The table total is calculated for you.',
+      'Record standard rebuys or custom amounts, and add players whenever they join.',
+      'Transfer recorded buy-ins between players or the bank. Removing a player transfers their buy-ins and keeps their history.',
+      'Enter a player’s final cash-out to record their profit or loss. Buy-ins track amounts taken, not the chip stack after each hand.',
+      'Undo the latest transaction to correct mistakes, or export the table summary.',
+      'Local play only: the signed-in manager controls everything. Tables save automatically and never expire. Reopen them here or from My Games.',
+    ],
+  },
   farkle: {
     name: 'Farkle',
     emoji: '🎲',
@@ -177,17 +191,17 @@ export default async function GamePage({ params }: PageProps) {
           {session ? (
             <>
               <Link
-                href={`/room/new?game=${params.slug}&mode=local`}
+                href={params.slug === 'cashier' ? '/games/cashier/new' : `/room/new?game=${params.slug}&mode=local`}
                 className="px-6 py-3 bg-[var(--accent)] text-white font-bold rounded-lg hover:brightness-110 transition-all"
               >
                 New Game
               </Link>
-              <Link
+              {params.slug !== 'cashier' && <Link
                 href={`/room/new?game=${params.slug}&mode=individual`}
                 className="px-6 py-3 bg-[var(--surface2)] text-[var(--text)] font-bold rounded-lg border border-[var(--border)] hover:border-[var(--accent)] transition-all"
               >
                 New Room (Share Room Code)
-              </Link>
+              </Link>}
             </>
           ) : (
             <Link
@@ -222,6 +236,7 @@ export default async function GamePage({ params }: PageProps) {
           </div>
         </div>
       </div>
+      {params.slug === 'cashier' && session?.user?.email && <CashierHistory email={session.user.email} />}
     </div>
   )
 }

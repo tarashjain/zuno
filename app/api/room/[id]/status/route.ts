@@ -1,9 +1,8 @@
 import { NextResponse } from 'next/server'
 import prisma from '@/lib/db'
+import { roomHasExpired } from '@/lib/room-expiry'
 
 export const dynamic = 'force-dynamic'
-
-const TWO_HOURS_MS = 2 * 60 * 60 * 1000
 
 export async function GET(_req: Request, { params }: { params: { id: string } }) {
   let session = await prisma.gameSession.findUnique({
@@ -15,13 +14,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
     return NextResponse.json(null, { status: 404 })
   }
 
-  // Auto-close games that have been active for more than 2 hours.
-  // Score Keeper is exempt — it's designed to run for an entire multi-day game.
-  if (
-    session.status === 'active' &&
-    session.game.slug !== 'score-keeper' &&
-    Date.now() - session.createdAt.getTime() > TWO_HOURS_MS
-  ) {
+  if (roomHasExpired(session.game.slug, session.status, session.createdAt)) {
     await prisma.gameSession.update({ where: { id: params.id }, data: { status: 'completed' } })
     session = { ...session, status: 'completed' }
   }

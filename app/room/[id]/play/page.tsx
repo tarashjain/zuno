@@ -12,6 +12,8 @@ import ScrabbleBoard from '@/components/games/ScrabbleBoard'
 import BollywoodBeatsBoard from '@/components/games/BollywoodBeatsBoard'
 import { getRoomActor } from '@/lib/room-auth'
 import PlayerRecovery from '@/components/room/PlayerRecovery'
+import CashierBoard from '@/components/games/CashierBoard'
+import type { CashierState } from '@/lib/cashier'
 
 export default async function PlayGame({ params }: { params: { id: string } }) {
   const actor = await getRoomActor(params.id)
@@ -28,6 +30,12 @@ export default async function PlayGame({ params }: { params: { id: string } }) {
 
   if (!session) return notFound()
   if (session.status !== 'active') redirect(`/room/${params.id}`)
+  if (session.game.slug === 'cashier') {
+    if (!actor.isHost || session.mode !== 'local') return notFound()
+    const state = session.boardState as CashierState | null
+    if (state?.kind !== 'cashier') return notFound()
+    return <CashierBoard key={session.id} sessionId={session.id} initialState={state} />
+  }
 
   const words = session.game.slug === '5-second-rule'
     ? await prisma.fiveSecondRuleCard.findMany()

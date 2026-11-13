@@ -3,6 +3,7 @@ import { notFound, redirect } from 'next/navigation'
 import LobbyLive from '@/components/room/LobbyLive'
 import ShareCodeButtons from '@/components/room/ShareCodeButtons'
 import { getRoomActor } from '@/lib/room-auth'
+import { roomHasExpired } from '@/lib/room-expiry'
 
 export default async function GameRoom({ params }: { params: { id: string } }) {
   let session = await prisma.gameSession.findUnique({
@@ -12,14 +13,7 @@ export default async function GameRoom({ params }: { params: { id: string } }) {
 
   if (!session) return notFound()
 
-  // Auto-close games older than 2 hours on page load as well.
-  // Score Keeper is exempt — it's designed to run for an entire multi-day game.
-  const TWO_HOURS_MS = 2 * 60 * 60 * 1000
-  if (
-    session.status === 'active' &&
-    session.game.slug !== 'score-keeper' &&
-    Date.now() - session.createdAt.getTime() > TWO_HOURS_MS
-  ) {
+  if (roomHasExpired(session.game.slug, session.status, session.createdAt)) {
     await prisma.gameSession.update({ where: { id: params.id }, data: { status: 'completed' } })
     session.status = 'completed'
   }

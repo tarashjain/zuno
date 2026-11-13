@@ -24,6 +24,7 @@ export async function createGameSession(formData: FormData) {
 
   const game = await prisma.game.findUnique({ where: { id: gameId } })
   if (!game) throw new Error('Game not found')
+  if (game.slug === 'cashier') redirect('/games/cashier/new')
   if (getKidsGame(game.slug)) redirect(`/games/${game.slug}/play`)
 
   const code = await createUniqueRoomCode()

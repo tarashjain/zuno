@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import prisma from '@/lib/db'
+import { cashierLedger, type CashierState } from '@/lib/cashier'
 
 export default async function History() {
   const session = await getServerSession(authOptions)
@@ -46,6 +47,8 @@ export default async function History() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {gameSessions.map(gameSession => {
             const isCompleted = gameSession.status === 'completed'
+            const cashier = gameSession.game.slug === 'cashier' && (gameSession.boardState as CashierState | null)?.kind === 'cashier' ? gameSession.boardState as CashierState : null
+            const playerCount = cashier ? cashierLedger(cashier).players.filter(player => player.status === 'playing').length : gameSession.players.length
             const topScores = gameSession.players.map(p => ({
               name: p.guestName,
               total: p.scores.reduce((sum, s) => sum + s.points, 0),
@@ -73,10 +76,10 @@ export default async function History() {
                   </span>
                 </div>
 
-                <div className="font-bold text-base mb-1">{gameSession.game.name}</div>
+                <div className="font-bold text-base mb-1">{cashier ? `Cashier · ${cashier.title}` : gameSession.game.name}</div>
                 <div className="text-xs text-[var(--muted)] font-medium mb-3">
                   {new Date(gameSession.createdAt).toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' })}
-                  {' · '}{gameSession.players.length} player{gameSession.players.length !== 1 ? 's' : ''}
+                  {' · '}{playerCount} player{playerCount !== 1 ? 's' : ''}{cashier ? ' · No expiry' : ''}
                 </div>
 
                 {isCompleted && hasScores ? (

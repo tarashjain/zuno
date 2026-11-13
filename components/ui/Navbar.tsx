@@ -19,6 +19,7 @@ const CATEGORIES = [
     games: [
       { name: 'Judgement',  slug: 'judgement-card-game', desc: 'Bid and win tricks' },
       { name: '100 Points', slug: '100-points',           desc: 'Bid variant scoring' },
+      { name: 'Cashier', slug: 'cashier', desc: 'Track buy-ins, chips, and cash-outs' },
     ],
   },
   {
