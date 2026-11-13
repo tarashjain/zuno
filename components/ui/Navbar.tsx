@@ -109,7 +109,15 @@ export default function Navbar() {
         </Link>
 
         {/* Desktop category nav */}
-        <div className="hidden xl:flex items-center gap-1 flex-1">
+        <div className="hidden 2xl:flex items-center gap-1 flex-1">
+          <Link
+            href="/tiny-decision"
+            onClick={() => setOpenCat(null)}
+            aria-current={pathname === '/tiny-decision' ? 'page' : undefined}
+            className={`px-3 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors ${pathname === '/tiny-decision' ? 'bg-[var(--surface2)] text-[var(--accent)]' : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface2)]'}`}
+          >
+            Tiny Decision
+          </Link>
           {CATEGORIES.map((cat) => (
             <div key={cat.label} className="relative">
               <button
@@ -146,7 +154,7 @@ export default function Navbar() {
         </div>
 
         {/* Desktop right side */}
-        <div className="hidden xl:flex items-center gap-3 ml-auto">
+        <div className="hidden 2xl:flex items-center gap-3 ml-auto">
           <Link
             href="/join"
             className="flex items-center gap-1.5 text-sm font-bold bg-[var(--surface2)] border border-[var(--border)] px-3 py-2 rounded-xl hover:border-[var(--accent)] hover:text-[var(--accent)] transition-colors"
@@ -199,7 +207,7 @@ export default function Navbar() {
         </div>
 
         {/* Mobile right: join shortcut + auth shortcut + hamburger */}
-        <div className="flex xl:hidden items-center gap-2 ml-auto">
+        <div className="flex 2xl:hidden items-center gap-2 ml-auto">
           <Link
             href="/join"
             className="text-sm font-bold text-[var(--accent)]"
@@ -226,17 +234,25 @@ export default function Navbar() {
       {/* Mobile drawer overlay */}
       {mobileOpen && (
         <div
-          className="fixed inset-0 bg-black/60 z-30 xl:hidden"
+          className="fixed inset-0 bg-black/60 z-30 2xl:hidden"
           onClick={() => setMobileOpen(false)}
         />
       )}
 
       {/* Mobile drawer */}
       <div
-        className={`fixed top-16 right-0 h-[calc(100vh-64px)] w-80 max-w-[90vw] bg-[var(--surface)] shadow-2xl border-l border-[var(--border)] z-40 xl:hidden transition-transform duration-300 ease-out overflow-y-auto
+        className={`fixed top-16 right-0 h-[calc(100vh-64px)] w-80 max-w-[90vw] bg-[var(--surface)] shadow-2xl border-l border-[var(--border)] z-40 2xl:hidden transition-transform duration-300 ease-out overflow-y-auto
           ${mobileOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="p-4 space-y-1">
+          <Link
+            href="/tiny-decision"
+            onClick={() => setMobileOpen(false)}
+            aria-current={pathname === '/tiny-decision' ? 'page' : undefined}
+            className={`block px-3 py-3 rounded-xl font-semibold transition-colors ${pathname === '/tiny-decision' ? 'bg-[var(--surface2)] text-[var(--accent)]' : 'hover:bg-[var(--surface2)]'}`}
+          >
+            Tiny Decision
+          </Link>
           {/* Game categories */}
           {CATEGORIES.map((cat) => (
             <div key={cat.label}>
