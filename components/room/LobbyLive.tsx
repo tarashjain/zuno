@@ -2,6 +2,7 @@
 import { useEffect, useRef, useState, useTransition } from 'react'
 import { useRouter } from 'next/navigation'
 import { joinSession, startSession, toggleReady, removePlayer } from '@/app/actions/score'
+import PlayerRecovery from './PlayerRecovery'
 
 type PlayerDTO = { id: number; guestName: string; ready: boolean }
 
@@ -53,24 +54,26 @@ export default function LobbyLive({
 
   // Once the host starts the game, everyone watching this lobby jumps to the board.
   useEffect(() => {
-    if (status === 'active' && !redirected.current) {
+    if (status === 'active' && (isHost || players.some(player => player.id === myPlayerId)) && !redirected.current) {
       redirected.current = true
       router.push(`/room/${sessionId}/play`)
     }
-  }, [status, sessionId, router])
+  }, [status, sessionId, router, isHost, players, myPlayerId])
 
   const handleJoin = () => {
     const name = guestName.trim()
     if (!name) return
     setJoinError(null)
     startTransition(async () => {
-      const result = await joinSession(sessionId, name)
-      if (result.ok && result.id !== undefined) {
-        setMyPlayerId(result.id)
-        setGuestName('')
-      } else {
-        setJoinError(result.reason ?? 'Could not add that player.')
-      }
+      try {
+        const result = await joinSession(sessionId, name)
+        if (result.ok && result.id !== undefined) {
+          setMyPlayerId(result.id)
+          setGuestName('')
+        } else {
+          setJoinError(result.reason ?? 'Could not add that player.')
+        }
+      } catch { setJoinError('Could not join the room. Please try again.') }
     })
   }
 
@@ -82,8 +85,15 @@ export default function LobbyLive({
   }
 
   const handleRemove = (playerId: number) => {
+    setStartError(null)
     startTransition(async () => {
-      await removePlayer(sessionId, playerId)
+      try {
+        const result = await removePlayer(sessionId, playerId)
+        if (result.ok) {
+          setPlayers(current => current.filter(player => player.id !== playerId))
+          if (myPlayerId === playerId) setMyPlayerId(null)
+        } else setStartError(result.reason ?? 'Could not remove that player.')
+      } catch { setStartError('Could not remove that player. Please try again.') }
     })
   }
 
@@ -171,7 +181,7 @@ export default function LobbyLive({
                   <span className="flex items-center gap-2 truncate">
                     <span>👤</span> {p.guestName}
                   </span>
-                  {isLocal && isHost ? (
+                  {isHost && (
                     <button
                       onClick={() => handleRemove(p.id)}
                       disabled={pending}
@@ -180,7 +190,8 @@ export default function LobbyLive({
                     >
                       ×
                     </button>
-                  ) : !isLocal && (
+                  )}
+                  {!isLocal && (
                     <span
                       className={`text-xs font-bold uppercase tracking-wide px-2 py-1 rounded-full flex-shrink-0 ${
                         p.ready ? 'bg-[#16a34a] text-white' : 'bg-[var(--surface2)] text-[var(--muted)]'
@@ -221,6 +232,13 @@ export default function LobbyLive({
           )}
         </div>
       </div>
+
+      {isHost && !isLocal && <PlayerRecovery sessionId={sessionId} players={players} />}
+      {!isHost && !isLocal && !me && (
+        <p className="mt-5 text-center text-sm text-[var(--muted)]">
+          Already joined before? Ask the host for a private recovery link to restore your existing player.
+        </p>
+      )}
 
       {/* Footer hint */}
       <p className="text-center text-xs text-[var(--muted)] font-semibold mt-6">

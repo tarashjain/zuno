@@ -6,7 +6,7 @@ import { cookies } from 'next/headers'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { playerCookieName, requireRoomActor } from '@/lib/room-auth'
-import { createPlayerToken, readPlayerToken, PLAYER_TOKEN_MAX_AGE } from '@/lib/player-token'
+import { createPlayerTokenSigner, readPlayerToken, PLAYER_TOKEN_MAX_AGE } from '@/lib/player-token'
 
 export async function submitScore(
   sessionId: string,
@@ -64,15 +64,23 @@ export async function joinSession(
   })
   if (existing) return { ok: false, reason: `"${name}" is already in this game — pick a different name.` }
 
-  const player = await prisma.sessionPlayer.create({ data: { sessionId, guestName: name } })
-
-  cookies().set(playerCookieName(sessionId), createPlayerToken(sessionId, player.id), {
-    path: '/',
-    httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
-    maxAge: PLAYER_TOKEN_MAX_AGE,
-  })
+  let player: { id: number }
+  try {
+    const signToken = createPlayerTokenSigner(sessionId)
+    player = await prisma.$transaction(async tx => {
+      const joined = await tx.sessionPlayer.create({ data: { sessionId, guestName: name } })
+      cookies().set(playerCookieName(sessionId), signToken(joined.id), {
+        path: '/',
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'lax',
+        maxAge: PLAYER_TOKEN_MAX_AGE,
+      })
+      return joined
+    })
+  } catch {
+    return { ok: false, reason: 'Could not join the room. Please try again later.' }
+  }
 
   revalidatePath(`/room/${sessionId}`)
   return { ok: true, id: player.id }
@@ -101,12 +109,12 @@ export async function removePlayer(
   const authSession = await getServerSession(authOptions)
   const room = await prisma.gameSession.findUnique({ where: { id: sessionId } })
   if (!room) return { ok: false, reason: 'Room not found.' }
-  if (room.mode !== 'local') return { ok: false, reason: 'Only local games support host removal.' }
   if (!authSession?.user?.email || authSession.user.email !== room.hostEmail) {
     return { ok: false, reason: 'Only the host can remove players.' }
   }
   if (room.status !== 'lobby') return { ok: false, reason: 'The game has already started.' }
-  await prisma.sessionPlayer.deleteMany({ where: { id: playerId, sessionId } })
+  const removed = await prisma.sessionPlayer.deleteMany({ where: { id: playerId, sessionId, session: { status: 'lobby' } } })
+  if (!removed.count) return { ok: false, reason: 'Player not found or the game has already started.' }
   revalidatePath(`/room/${sessionId}`)
   return { ok: true }
 }

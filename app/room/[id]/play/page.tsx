@@ -11,6 +11,7 @@ import WavelengthBoard from '@/components/games/WavelengthBoard'
 import ScrabbleBoard from '@/components/games/ScrabbleBoard'
 import BollywoodBeatsBoard from '@/components/games/BollywoodBeatsBoard'
 import { getRoomActor } from '@/lib/room-auth'
+import PlayerRecovery from '@/components/room/PlayerRecovery'
 
 export default async function PlayGame({ params }: { params: { id: string } }) {
   const actor = await getRoomActor(params.id)
@@ -64,6 +65,10 @@ export default async function PlayGame({ params }: { params: { id: string } }) {
           ← New Game
         </a>
       </header>
+
+      {actor.isHost && session.mode === 'individual' && (
+        <PlayerRecovery sessionId={session.id} players={session.players.map(player => ({ id: player.id, guestName: player.guestName }))} />
+      )}
 
       {ActiveGame ? (
         <ActiveGame

@@ -29,7 +29,13 @@ export default async function GameRoom({ params }: { params: { id: string } }) {
   // Only verified room members may enter an active game.
   if (session.status === 'active') {
     if (actor.authorized) redirect(`/room/${params.id}/play`)
-    return notFound()
+    return (
+      <main className="mx-auto max-w-lg px-4 py-12">
+        <h1 className="text-3xl font-bold">Need to reconnect?</h1>
+        <p className="mt-5 text-[var(--muted)]">This game has already started. Ask the host to open “Help a player reconnect” on the game board and send you a private recovery link.</p>
+        <p className="mt-3 text-sm text-[var(--muted)]">The link restores your existing player and scores on this device.</p>
+      </main>
+    )
   }
 
   // Completed games show a summary — never allow rejoining.
