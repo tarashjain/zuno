@@ -99,6 +99,7 @@ async function tallyEndGame(
 export async function startScrabbleGame(sessionId: string): Promise<ScrabblePublic> {
   const { room } = await requireRoomHost(sessionId)
   if (room.status !== 'active') throw new Error('The game is not active.')
+  if (room.game.slug !== 'scrabble') throw new Error('Invalid game room.')
 
   const session = await prisma.gameSession.findUnique({ where: { id: sessionId }, include: { players: true } })
   if (!session) throw new Error('Session not found')

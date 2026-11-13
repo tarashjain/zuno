@@ -86,13 +86,28 @@ export default function Navbar() {
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  // Close mobile menu on route change
-  useEffect(() => { setMobileOpen(false) }, [pathname])
+  useEffect(() => { setMobileOpen(false); setOpenCat(null) }, [pathname])
+
+  useEffect(() => {
+    const desktop = window.matchMedia('(min-width: 1536px)')
+    const closeOnDesktop = () => { if (desktop.matches) setMobileOpen(false) }
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') { setMobileOpen(false); setOpenCat(null) }
+    }
+    desktop.addEventListener('change', closeOnDesktop)
+    document.addEventListener('keydown', closeOnEscape)
+    return () => {
+      desktop.removeEventListener('change', closeOnDesktop)
+      document.removeEventListener('keydown', closeOnEscape)
+    }
+  }, [])
 
   // Prevent body scroll when mobile menu open
   useEffect(() => {
-    document.body.style.overflow = mobileOpen ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
+    if (!mobileOpen) return
+    const previousOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => { document.body.style.overflow = previousOverflow }
   }, [mobileOpen])
 
   return (
@@ -137,6 +152,7 @@ export default function Navbar() {
           <div className="ml-3">
             <Link
               href="/games/score-keeper"
+              onClick={() => setOpenCat(null)}
               aria-current={pathname === '/games/score-keeper' ? 'page' : undefined}
               className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${pathname === '/games/score-keeper' ? 'bg-[var(--surface2)] text-[var(--accent)]' : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface2)]'}`}
             >
@@ -224,6 +240,8 @@ export default function Navbar() {
             onClick={() => setMobileOpen(!mobileOpen)}
             className="w-9 h-9 flex flex-col items-center justify-center gap-1.5 rounded-lg hover:bg-[var(--surface2)] transition-colors"
             aria-label="Menu"
+            aria-expanded={mobileOpen}
+            aria-controls="mobile-navigation"
           >
             <span className={`block w-5 h-0.5 bg-[var(--text)] transition-all ${mobileOpen ? 'rotate-45 translate-y-2' : ''}`} />
             <span className={`block w-5 h-0.5 bg-[var(--text)] transition-all ${mobileOpen ? 'opacity-0' : ''}`} />
@@ -242,8 +260,10 @@ export default function Navbar() {
 
       {/* Mobile drawer */}
       <div
+        id="mobile-navigation"
+        aria-hidden={!mobileOpen}
         className={`fixed top-16 right-0 h-[calc(100vh-64px)] w-80 max-w-[90vw] bg-[var(--surface)] shadow-2xl border-l border-[var(--border)] z-40 2xl:hidden transition-transform duration-300 ease-out overflow-y-auto
-          ${mobileOpen ? 'translate-x-0' : 'translate-x-full'}`}
+          ${mobileOpen ? 'visible translate-x-0' : 'invisible translate-x-full'}`}
       >
         <div className="p-4 space-y-1">
           {/* Game categories */}

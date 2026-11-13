@@ -2,22 +2,22 @@ import { cookies } from 'next/headers'
 import { getServerSession } from 'next-auth'
 import prisma from '@/lib/db'
 import { authOptions } from '@/lib/auth'
+import { readPlayerToken } from '@/lib/player-token'
 
 export const playerCookieName = (sessionId: string) => `zuno_player_${sessionId}`
 
 export async function getRoomActor(sessionId: string) {
   const room = await prisma.gameSession.findUnique({
     where: { id: sessionId },
-    select: { id: true, hostEmail: true, mode: true, status: true },
+    select: { id: true, hostEmail: true, mode: true, status: true, game: { select: { slug: true } } },
   })
 
   if (!room) return { room: null, isHost: false, playerId: null, authorized: false }
 
   const authSession = await getServerSession(authOptions)
   const isHost = !!authSession?.user?.email && authSession.user.email === room.hostEmail
-  const rawPlayerId = cookies().get(playerCookieName(sessionId))?.value
-  const parsedPlayerId = rawPlayerId ? Number.parseInt(rawPlayerId, 10) : NaN
-  const player = Number.isInteger(parsedPlayerId)
+  const parsedPlayerId = readPlayerToken(sessionId, cookies().get(playerCookieName(sessionId))?.value)
+  const player = parsedPlayerId !== null
     ? await prisma.sessionPlayer.findFirst({ where: { id: parsedPlayerId, sessionId }, select: { id: true } })
     : null
 

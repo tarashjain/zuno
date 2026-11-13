@@ -6,6 +6,7 @@ import { cookies } from 'next/headers'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { playerCookieName, requireRoomActor } from '@/lib/room-auth'
+import { createPlayerToken, readPlayerToken, PLAYER_TOKEN_MAX_AGE } from '@/lib/player-token'
 
 export async function submitScore(
   sessionId: string,
@@ -16,6 +17,11 @@ export async function submitScore(
 ) {
   const { room } = await requireRoomActor(sessionId)
   if (room.status !== 'active') throw new Error('The game is not active.')
+  if (!['farkle', '5-second-rule', 'score-keeper'].includes(room.game.slug)) {
+    throw new Error('Use this game’s scoring action.')
+  }
+  if (!Number.isInteger(points) || points < -2_147_483_648 || points > 2_147_483_647) throw new Error('Score must be a valid whole number.')
+  if (!Number.isInteger(round) || round < 1 || round > 2_147_483_647) throw new Error('Round must be a positive whole number.')
 
   const player = await prisma.sessionPlayer.findFirst({ where: { id: playerId, sessionId }, select: { id: true } })
   if (!player) throw new Error('Player does not belong to this room.')
@@ -44,9 +50,9 @@ export async function joinSession(
   } else {
     // In a share-code room, one device/browser may only join as a single player —
     // everyone else must join from their own device using the room code.
-    const existingPlayerId = cookies().get(playerCookieName(sessionId))?.value
-    const existingPlayer = existingPlayerId
-      ? await prisma.sessionPlayer.findFirst({ where: { id: Number(existingPlayerId), sessionId }, select: { guestName: true } })
+    const existingPlayerId = readPlayerToken(sessionId, cookies().get(playerCookieName(sessionId))?.value)
+    const existingPlayer = existingPlayerId !== null
+      ? await prisma.sessionPlayer.findFirst({ where: { id: existingPlayerId, sessionId }, select: { guestName: true } })
       : null
     if (existingPlayer) {
       return { ok: false, reason: `You already joined this room as "${existingPlayer.guestName}".` }
@@ -60,12 +66,12 @@ export async function joinSession(
 
   const player = await prisma.sessionPlayer.create({ data: { sessionId, guestName: name } })
 
-  cookies().set(playerCookieName(sessionId), String(player.id), {
+  cookies().set(playerCookieName(sessionId), createPlayerToken(sessionId, player.id), {
     path: '/',
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
     sameSite: 'lax',
-    maxAge: 60 * 60 * 12, // 12 hours — long enough for one game session
+    maxAge: PLAYER_TOKEN_MAX_AGE,
   })
 
   revalidatePath(`/room/${sessionId}`)
@@ -73,8 +79,8 @@ export async function joinSession(
 }
 
 export async function toggleReady(sessionId: string, playerId: number) {
-  const mine = cookies().get(playerCookieName(sessionId))?.value
-  if (mine !== String(playerId)) return { ok: false, reason: 'Not your player.' }
+  const mine = readPlayerToken(sessionId, cookies().get(playerCookieName(sessionId))?.value)
+  if (mine !== playerId) return { ok: false, reason: 'Not your player.' }
 
   const player = await prisma.sessionPlayer.findUnique({
     where: { id: playerId },
@@ -119,6 +125,8 @@ export async function startSession(sessionId: string): Promise<{ ok: boolean; re
     return { ok: false, reason: 'Only the host can start the game.' }
   }
 
+  if (gameSession.status !== 'lobby') return { ok: false, reason: 'This game has already started or ended.' }
+
   if (gameSession.players.length === 0) {
     return { ok: false, reason: 'Add at least one player first.' }
   }
@@ -127,7 +135,8 @@ export async function startSession(sessionId: string): Promise<{ ok: boolean; re
     return { ok: false, reason: 'Waiting for all players to be ready.' }
   }
 
-  await prisma.gameSession.update({ where: { id: sessionId }, data: { status: 'active' } })
+  const started = await prisma.gameSession.updateMany({ where: { id: sessionId, status: 'lobby' }, data: { status: 'active' } })
+  if (!started.count) return { ok: false, reason: 'This game has already started or ended.' }
   revalidatePath(`/room/${sessionId}`)
   redirect(`/room/${sessionId}/play`)
 }

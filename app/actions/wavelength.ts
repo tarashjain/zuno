@@ -26,6 +26,7 @@ const asInputJson = (v: unknown) => v as Prisma.InputJsonValue
 export async function startWavelengthRound(sessionId: string): Promise<WavelengthPublic> {
   const { room } = await requireRoomHost(sessionId)
   if (room.status !== 'active') throw new Error('The game is not active.')
+  if (room.game.slug !== 'wavelength') throw new Error('Invalid game room.')
 
   const session = await prisma.gameSession.findUnique({ where: { id: sessionId }, include: { players: true } })
   if (!session) throw new Error('Session not found')
@@ -77,6 +78,9 @@ export async function getWavelengthSecret(sessionId: string, requestedPlayerId: 
   const secretState = session?.secretState as WavelengthSecret | null
   if (!session || publicState?.kind !== 'wavelength' || secretState?.kind !== 'wavelength') throw new Error('No Wavelength round is active.')
   if (!session.players.some(p => p.id === requestedPlayerId)) throw new Error('Player does not belong to this room.')
+  if (requestedPlayerId !== publicState.psychicId && !(actor.isHost && actor.room.mode === 'local')) {
+    throw new Error('Only the Psychic can see the hidden target.')
+  }
 
   return { target: secretState.target }
 }
@@ -98,6 +102,7 @@ export async function startTeamGuessing(sessionId: string) {
 export async function setWavelengthPointer(sessionId: string, pointer: number) {
   const actor = await requireRoomActor(sessionId)
   if (actor.room.status !== 'active') throw new Error('The game is not active.')
+  if (!Number.isFinite(pointer) || pointer < 0 || pointer > 100) throw new Error('Pointer must be between 0 and 100.')
 
   const session = await prisma.gameSession.findUnique({ where: { id: sessionId }, select: { boardState: true } })
   const publicState = session?.boardState as WavelengthPublic | null

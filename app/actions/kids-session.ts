@@ -20,13 +20,17 @@ export async function saveKidsSession(
   if (!session?.user?.email) return { ok: false }
 
   const kidsGame = getKidsGame(gameSlug)
+  if (!kidsGame || !Array.isArray(players) || players.length === 0 || players.some(p =>
+    !p || typeof p.name !== 'string' || !p.name.trim() || p.name.trim().length > 40 ||
+    !Number.isInteger(p.score) || p.score < -2_147_483_648 || p.score > 2_147_483_647 || typeof p.won !== 'boolean'
+  )) return { ok: false }
   const game = await prisma.game.upsert({
     where: { slug: gameSlug },
-    create: { slug: gameSlug, name: kidsGame?.name ?? gameSlug },
+    create: { slug: gameSlug, name: kidsGame.name },
     update: {},
   })
 
-  const gameSession = await prisma.gameSession.create({
+  await prisma.gameSession.create({
     data: {
       code: crypto.randomUUID(),
       gameId: game.id,
@@ -34,37 +38,25 @@ export async function saveKidsSession(
       mode: 'local',
       hostEmail: session.user.email,
       players: {
-        create: players.map(p => ({ guestName: p.name })),
+        create: players.map(p => ({
+          guestName: p.name.trim(),
+          scores: { create: { points: p.score, round: 1, notes: p.won ? 'winner' : null } },
+        })),
       },
     },
-    include: { players: true },
   })
-
-  for (const sp of gameSession.players) {
-    const result = players.find(p => p.name === sp.guestName)
-    if (!result) continue
-    await prisma.score.create({
-      data: {
-        playerId: sp.id,
-        points: result.score,
-        round: 1,
-        notes: result.won ? 'winner' : null,
-      },
-    })
-  }
 
   return { ok: true }
 }
 
-export async function getKidsHistory(
-  gameSlug: string,
-  userEmail: string
-): Promise<KidsSessionHistory> {
+export async function getKidsHistory(gameSlug: string): Promise<KidsSessionHistory> {
+  const authSession = await getServerSession(authOptions)
+  if (!authSession?.user?.email) return []
   const game = await prisma.game.findUnique({ where: { slug: gameSlug } })
   if (!game) return []
 
   const sessions = await prisma.gameSession.findMany({
-    where: { gameId: game.id, hostEmail: userEmail, status: 'completed' },
+    where: { gameId: game.id, hostEmail: authSession.user.email, status: 'completed' },
     include: { players: { include: { scores: true } } },
     orderBy: { createdAt: 'desc' },
     take: 5,

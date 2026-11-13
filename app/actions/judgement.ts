@@ -26,8 +26,9 @@ function defaultState(playerIds: number[]): JudgementPublic {
 }
 
 async function getOrInitState(sessionId: string) {
-  const session = await prisma.gameSession.findUnique({ where: { id: sessionId }, include: { players: true } })
+  const session = await prisma.gameSession.findUnique({ where: { id: sessionId }, include: { players: true, game: true } })
   if (!session) throw new Error('Session not found')
+  if (session.game.slug !== 'judgement-card-game' || session.status !== 'active') throw new Error('No active Judgement game in this room.')
   const existing = session.boardState as JudgementPublic | null
   if (existing?.kind === 'judgement') return { session, state: existing }
 

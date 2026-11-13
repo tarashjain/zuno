@@ -141,7 +141,7 @@ export default async function GamePage({ params }: PageProps) {
   if (localGame) {
     const session = await getServerSession(authOptions)
     const history: KidsSessionHistory = session?.user?.email
-      ? await getKidsHistory(params.slug, session.user.email)
+      ? await getKidsHistory(params.slug)
       : []
     return <KidsGameDetails game={localGame} history={history} />
   }

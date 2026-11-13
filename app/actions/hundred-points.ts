@@ -30,8 +30,9 @@ function defaultState(activePlayerIds: number[], eliminated: number[]): HundredP
 }
 
 async function getOrInitState(sessionId: string) {
-  const session = await prisma.gameSession.findUnique({ where: { id: sessionId }, include: { players: { include: { scores: true } } } })
+  const session = await prisma.gameSession.findUnique({ where: { id: sessionId }, include: { game: true, players: { include: { scores: true } } } })
   if (!session) throw new Error('Session not found')
+  if (session.game.slug !== '100-points' || session.status !== 'active') throw new Error('No active 100 Points game in this room.')
   const existing = session.boardState as HundredPointsPublic | null
   if (existing?.kind === 'hundred-points') return { session, state: existing }
 
