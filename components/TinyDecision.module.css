@@ -1,0 +1,26 @@
+.diceRoll {
+  animation: dice-roll 550ms ease-in-out;
+}
+
+.resultReveal {
+  animation: result-reveal 300ms ease-out 350ms both;
+}
+
+@keyframes dice-roll {
+  0%, 100% { transform: rotate(12deg); }
+  25% { transform: translateY(-8px) rotate(-18deg); }
+  50% { transform: translateY(-4px) rotate(28deg); }
+  75% { transform: translateY(-2px) rotate(-6deg); }
+}
+
+@keyframes result-reveal {
+  from { opacity: 0; transform: translateY(8px) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .diceRoll,
+  .resultReveal {
+    animation: none;
+  }
+}

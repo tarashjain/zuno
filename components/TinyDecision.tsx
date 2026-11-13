@@ -1,6 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
+import styles from './TinyDecision.module.css'
 
 type Option = { id: number; label: string; probability: string }
 const COLORS = ['#e8430a', '#62745c', '#b38a51', '#77738e', '#b66c70', '#507f89']
@@ -22,6 +23,11 @@ export default function TinyDecision() {
   const validTotal = validProbabilities && Math.abs(total - 100) < 0.000001
   const named = options.every(option => option.label.trim())
   const ready = named && validTotal
+  const probabilityError = custom && !validTotal
+    ? !validProbabilities
+      ? 'Enter a probability between 0% and 100% for every option.'
+      : `Probabilities must total 100%. Your current total is ${Number(total.toFixed(6))}%.`
+    : null
 
   function update(id: number, change: Partial<Option>) {
     setOptions(current => current.map(option => option.id === id ? { ...option, ...change } : option))
@@ -94,7 +100,8 @@ export default function TinyDecision() {
                   onChange={event => update(option.id, { label: event.target.value })}
                   className="min-w-0 flex-1 bg-[var(--paper)] border border-[var(--border)] rounded-xl px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]" />
                 <div className="flex items-center gap-1 w-24 shrink-0 justify-end text-sm tabular-nums">
-                  {custom ? <input type="number" min="0" max="100" step="0.01" aria-label={`Probability for option ${index + 1}`} aria-describedby="chance-help"
+                  {custom ? <input type="number" min="0" max="100" step="0.01" aria-label={`Probability for option ${index + 1}`}
+                    aria-invalid={!!probabilityError} aria-describedby={probabilityError ? 'chance-help probability-error' : 'chance-help'}
                     value={option.probability} onChange={event => update(option.id, { probability: event.target.value })}
                     className="w-[4.5rem] bg-[var(--paper)] border border-[var(--border)] rounded-xl px-2 py-3 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]" />
                     : <span>{format(probabilities[index])}</span>}
@@ -111,29 +118,24 @@ export default function TinyDecision() {
             onClick={addOption}
             className="mt-4 w-full py-3 border border-dashed border-[var(--border)] rounded-xl text-sm font-bold hover:border-[var(--accent)] hover:text-[var(--accent)] disabled:opacity-40 disabled:cursor-not-allowed">+ Add an option</button>
 
-          <div className="mt-7 pt-5 border-t border-[var(--border)]">
-            <div className="flex justify-between text-xs font-bold mb-3">
-              <span className="text-[var(--muted)] uppercase tracking-widest">The odds</span>
-              <span className={validTotal ? '' : 'text-[var(--red)]'}>{validProbabilities ? format(total) : '—'}% total</span>
-            </div>
-            <div className="flex h-2 rounded-full overflow-hidden bg-[var(--surface2)]" aria-hidden="true">
-              {validProbabilities && probabilities.map((probability, index) => <div key={options[index].id} className="transition-all duration-300" style={{ width: `${probability}%`, background: COLORS[index % COLORS.length] }} />)}
-            </div>
-            <p className="text-xs text-[var(--muted)] mt-3" role="status">{!validTotal ? 'Use percentages from 0 to 100 that total exactly 100%.' : !custom ? 'Displayed percentages are rounded; the actual chances are equal.' : 'All set. A 0% option will never be picked.'}</p>
-          </div>
+          {probabilityError && (
+            <p id="probability-error" role="alert" className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-[var(--red)]">
+              {probabilityError}
+            </p>
+          )}
         </section>
 
         <section aria-label="Random picker" className="lg:sticky lg:top-24 bg-[var(--surface2)] border border-[var(--border)] rounded-3xl p-6 sm:p-10 text-center overflow-hidden">
           <p className="text-xs uppercase tracking-[0.25em] font-bold text-[var(--muted)]">Leave a little to chance</p>
-          <div className="my-8 mx-auto w-20 h-20 rounded-3xl bg-[var(--paper)] border border-[var(--border)] flex items-center justify-center text-[var(--accent)] rotate-12 shadow-sm" aria-hidden="true">
+          <div key={result?.count ?? 0} className={`my-8 mx-auto w-20 h-20 rounded-3xl bg-[var(--paper)] border border-[var(--border)] flex items-center justify-center text-[var(--accent)] rotate-12 shadow-sm ${result ? styles.diceRoll : ''}`} aria-hidden="true">
             <svg viewBox="0 0 48 48" fill="currentColor" className="w-11 h-11"><circle cx="12" cy="12" r="3" /><circle cx="36" cy="12" r="3" /><circle cx="24" cy="24" r="3" /><circle cx="12" cy="36" r="3" /><circle cx="36" cy="36" r="3" /></svg>
           </div>
           <div className="min-h-36 flex flex-col justify-center" aria-live="polite" aria-atomic="true">
-            {result ? <>
-              <p className="text-xs font-bold uppercase tracking-widest text-[var(--accent)] mb-3">Your tiny decision · Pick {result.count}</p>
+            {result ? <div key={result.count} className={styles.resultReveal}>
+              <p className="text-xs font-bold uppercase tracking-widest text-[var(--accent)] mb-3">Fate has spoken. No take-backs.</p>
               <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight break-words">{result.label}</h2>
               <p className="text-sm text-[var(--muted)] mt-4">{format(result.probability)}% chance. One less thing to think about.</p>
-            </> : <>
+            </div> : <>
               <h2 className="text-3xl font-bold tracking-tight">A small leap of chance.</h2>
               <p className="mt-3 text-sm text-[var(--muted)]">Your next move is waiting to be picked.</p>
             </>}
