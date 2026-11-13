@@ -137,7 +137,8 @@ export default function Navbar() {
           <div className="ml-3">
             <Link
               href="/games/score-keeper"
-              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface2)] transition-colors"
+              aria-current={pathname === '/games/score-keeper' ? 'page' : undefined}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold transition-colors ${pathname === '/games/score-keeper' ? 'bg-[var(--surface2)] text-[var(--accent)]' : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface2)]'}`}
             >
               <span>📝</span>
               <span>Score Keeper</span>
@@ -284,7 +285,8 @@ export default function Navbar() {
           <div className="mt-2">
             <Link
               href="/games/score-keeper"
-              className="flex items-center gap-2 px-3 py-3 rounded-xl hover:bg-[var(--surface2)] font-semibold transition-colors"
+              aria-current={pathname === '/games/score-keeper' ? 'page' : undefined}
+              className={`flex items-center gap-2 px-3 py-3 rounded-xl font-semibold transition-colors ${pathname === '/games/score-keeper' ? 'bg-[var(--surface2)] text-[var(--accent)]' : 'hover:bg-[var(--surface2)]'}`}
             >
               📝 Score Keeper
             </Link>
