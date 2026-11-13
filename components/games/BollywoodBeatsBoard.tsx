@@ -10,21 +10,20 @@ type Team = 'A' | 'B'
 
 const ERA_ORDER = ['1950s-80s', '1990s', '2000s', '2010s'] as const
 const ERA_META: Record<string, { label: string; color: string; light: string }> = {
-  '1950s-80s': { label: '1950s–80s', color: '#f59e0b', light: '#fcd34d' },
-  '1990s':     { label: '1990s',     color: '#ec4899', light: '#f9a8d4' },
-  '2000s':     { label: '2000–2009', color: '#3b82f6', light: '#93c5fd' },
-  '2010s':     { label: '2010–Now',  color: '#10b981', light: '#6ee7b7' },
+  '1950s-80s': { label: '1950s–80s', color: '#a77935', light: '#e8c77e' },
+  '1990s':     { label: '1990s',     color: '#87485a', light: '#d99aaa' },
+  '2000s':     { label: '2000–2009', color: '#356776', light: '#8bb8c0' },
+  '2010s':     { label: '2010–Now',  color: '#3d735b', light: '#91bca0' },
 }
-// 8 SVG wheel sectors: Era1 Era2 Era3 Era4 (dark), Era1 Era2 Era3 Era4 (darker alt)
 const WHEEL_SECTORS = [
-  { color: '#f59e0b', era: '1950s-80s', label: '50s–80s' },
-  { color: '#ec4899', era: '1990s',     label: '1990s' },
-  { color: '#3b82f6', era: '2000s',     label: '2000s' },
-  { color: '#10b981', era: '2010s',     label: '2010+' },
-  { color: '#b45309', era: '1950s-80s', label: '50s–80s' },
-  { color: '#9d174d', era: '1990s',     label: '1990s' },
-  { color: '#1d4ed8', era: '2000s',     label: '2000s' },
-  { color: '#065f46', era: '2010s',     label: '2010+' },
+  { color: '#a77935', deep: '#795326', era: '1950s-80s', label: '50s–80s' },
+  { color: '#87485a', deep: '#653444', era: '1990s',     label: '1990s' },
+  { color: '#356776', deep: '#294e5a', era: '2000s',     label: '2000s' },
+  { color: '#3d735b', deep: '#2c5946', era: '2010s',     label: '2010+' },
+  { color: '#98703a', deep: '#704d2b', era: '1950s-80s', label: '50s–80s' },
+  { color: '#794253', deep: '#59313f', era: '1990s',     label: '1990s' },
+  { color: '#315f6d', deep: '#254752', era: '2000s',     label: '2000s' },
+  { color: '#38694f', deep: '#294d3d', era: '2010s',     label: '2010+' },
 ]
 const W_CX = 150, W_CY = 150, W_R = 140
 const wRad = (d: number) => (d - 90) * Math.PI / 180
@@ -278,20 +277,31 @@ export default function BollywoodBeatsBoard({ players: roomPlayers = [] }: { pla
         <div className="relative" style={{ width: 300, height: 300 }}>
           {/* Pointer needle */}
           <div className="absolute left-1/2 -translate-x-1/2 z-20" style={{ top: -8 }}>
-            <svg width="28" height="38" viewBox="0 0 28 38">
-              <polygon points="14,38 1,4 27,4" fill="#1a1a1a" />
-              <polygon points="14,34 4,6 14,6" fill="rgba(255,255,255,0.25)" />
-              <polygon points="14,4 1,4 27,4" fill="white" />
+            <svg width="34" height="44" viewBox="0 0 34 44" aria-hidden="true">
+              <defs>
+                <linearGradient id="wheel-pointer-gold" x1="0" x2="1" y1="0" y2="1">
+                  <stop offset="0" stopColor="#f4dfa5" />
+                  <stop offset="0.5" stopColor="#bd914c" />
+                  <stop offset="1" stopColor="#775224" />
+                </linearGradient>
+              </defs>
+              <path d="M17 43 1 5a2 2 0 0 1 2-3h28a2 2 0 0 1 2 3L17 43Z" fill="#513b22" />
+              <path d="M17 38 4 6h26L17 38Z" fill="url(#wheel-pointer-gold)" stroke="#f4dfa5" strokeWidth="1" />
+              <path d="M17 34 8 8h9v26Z" fill="rgba(255,255,255,0.2)" />
+              <circle cx="17" cy="5" r="3" fill="#fff3cd" stroke="#8a6935" strokeWidth="1.5" />
             </svg>
           </div>
 
-          {/* Outer glow ring */}
+          {/* Decorative wheel rim */}
           <div className="absolute inset-0 rounded-full"
             style={{
               boxShadow: spinning
-                ? '0 0 42px rgba(0,0,0,0.22), 0 0 14px rgba(255,255,255,0.42)'
-                : '0 8px 24px rgba(0,0,0,0.16)',
-              transition: 'box-shadow 700ms ease',
+                ? '0 0 42px rgba(67,49,26,0.24), 0 0 14px rgba(225,193,127,0.28)'
+                : '0 9px 24px rgba(49,37,23,0.2)',
+              border: '5px solid #72552d',
+              outline: '1px solid rgba(241,218,165,0.85)',
+              outlineOffset: '-3px',
+              transition: 'box-shadow 700ms ease, border-color 700ms ease',
             }} />
 
           {/* SVG wheel */}
@@ -307,20 +317,35 @@ export default function BollywoodBeatsBoard({ players: roomPlayers = [] }: { pla
                 : 'drop-shadow(0 5px 14px rgba(0,0,0,0.2))',
             }}
           >
+            <defs>
+              {WHEEL_SECTORS.map((sector, i) => (
+                <linearGradient key={i} id={`wheel-sector-${i}`} x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0" stopColor={sector.color} />
+                  <stop offset="1" stopColor={sector.deep} />
+                </linearGradient>
+              ))}
+              <radialGradient id="wheel-hub" cx="35%" cy="28%">
+                <stop offset="0" stopColor="#6d5535" />
+                <stop offset="1" stopColor="#29241e" />
+              </radialGradient>
+            </defs>
+            <circle cx={W_CX} cy={W_CY} r={W_R + 5} fill="#362b20" stroke="#d7b66f" strokeWidth="2" />
+            <circle cx={W_CX} cy={W_CY} r={W_R + 1} fill="none" stroke="#f2dfa9" strokeWidth="1" opacity="0.8" />
+
             {/* Sectors */}
             {WHEEL_SECTORS.map((s, i) => {
               const lp = labelAt(i)
               const isLanded = !spinning && selectedEra === s.era
               return (
                 <g key={i}>
-                  <path d={sectorPath(i)} fill={s.color}
-                    stroke={isLanded ? 'white' : 'rgba(255,255,255,0.3)'} strokeWidth={isLanded ? 3 : 1.5} />
+                  <path d={sectorPath(i)} fill={`url(#wheel-sector-${i})`}
+                    stroke={isLanded ? '#fff0bd' : 'rgba(246,224,177,0.42)'} strokeWidth={isLanded ? 2.5 : 1} />
                   <text
                     x={lp.x} y={lp.y}
                     textAnchor="middle" dominantBaseline="middle"
-                    fill="white" fontSize="11.5" fontWeight="800"
+                    fill="#fff8e9" fontSize="11.5" fontWeight="700"
                     transform={`rotate(${lp.rot}, ${lp.x}, ${lp.y})`}
-                    style={{ userSelect: 'none', textShadow: '0 1px 3px rgba(0,0,0,0.6)', letterSpacing: '0.3px' }}
+                    style={{ userSelect: 'none', fontFamily: 'Georgia, serif', textShadow: '0 1px 3px rgba(25,17,10,0.7)', letterSpacing: '0.45px' }}
                   >
                     {s.label}
                   </text>
@@ -336,18 +361,22 @@ export default function BollywoodBeatsBoard({ players: roomPlayers = [] }: { pla
                   x1={W_CX} y1={W_CY}
                   x2={+(W_CX + W_R * Math.cos(a)).toFixed(2)}
                   y2={+(W_CY + W_R * Math.sin(a)).toFixed(2)}
-                  stroke="rgba(255,255,255,0.5)" strokeWidth="1.5"
+                  stroke="rgba(246,224,177,0.46)" strokeWidth="1"
                 />
               )
             })}
 
-            {/* Outer ring */}
-            <circle cx={W_CX} cy={W_CY} r={W_R} fill="none" stroke="rgba(255,255,255,0.6)" strokeWidth="3" />
+            <circle cx={W_CX} cy={W_CY} r={W_R - 2} fill="none" stroke="rgba(255,244,218,0.3)" strokeWidth="1" />
 
-            {/* Center hub */}
-            <circle cx={W_CX} cy={W_CY} r={18} fill="#1a1a1a" />
-            <circle cx={W_CX} cy={W_CY} r={11} fill="white" />
-            <circle cx={W_CX} cy={W_CY} r={5}  fill="#1a1a1a" />
+            {/* Center medallion */}
+            <circle cx={W_CX} cy={W_CY} r={31} fill="#382b1d" stroke="#d8b873" strokeWidth="2" />
+            <circle cx={W_CX} cy={W_CY} r={26} fill="url(#wheel-hub)" stroke="#f0dda9" strokeWidth="1" />
+            <circle cx={W_CX} cy={W_CY} r={21} fill="none" stroke="rgba(240,221,169,0.42)" strokeWidth="1" />
+            <text x={W_CX} y={W_CY + 1} textAnchor="middle" dominantBaseline="middle"
+              fill="#f3dfaa" fontSize="12" fontWeight="700" letterSpacing="2"
+              style={{ userSelect: 'none', fontFamily: 'Georgia, serif' }}>
+              BEATS
+            </text>
           </svg>
         </div>
 
