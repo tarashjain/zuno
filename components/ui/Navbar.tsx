@@ -164,8 +164,9 @@ export default function Navbar() {
             href="/tiny-decision"
             onClick={() => setOpenCat(null)}
             aria-current={pathname === '/tiny-decision' ? 'page' : undefined}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors ${pathname === '/tiny-decision' ? 'bg-[var(--surface2)] text-[var(--accent)]' : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface2)]'}`}
+            className={`flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors ${pathname === '/tiny-decision' ? 'bg-[var(--surface2)] text-[var(--accent)]' : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface2)]'}`}
           >
+            <span>🤔</span>
             Tiny Decision
           </Link>
         </div>
@@ -316,8 +317,9 @@ export default function Navbar() {
             href="/tiny-decision"
             onClick={() => setMobileOpen(false)}
             aria-current={pathname === '/tiny-decision' ? 'page' : undefined}
-            className={`block px-3 py-3 rounded-xl font-semibold transition-colors ${pathname === '/tiny-decision' ? 'bg-[var(--surface2)] text-[var(--accent)]' : 'hover:bg-[var(--surface2)]'}`}
+            className={`flex items-center gap-2 px-3 py-3 rounded-xl font-semibold transition-colors ${pathname === '/tiny-decision' ? 'bg-[var(--surface2)] text-[var(--accent)]' : 'hover:bg-[var(--surface2)]'}`}
           >
+            <span>🤔</span>
             Tiny Decision
           </Link>
 
