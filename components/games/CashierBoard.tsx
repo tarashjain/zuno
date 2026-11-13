@@ -65,7 +65,6 @@ export default function CashierBoard({ sessionId, initialState }: { sessionId: s
     </header>
     <div className="mb-6">
       <h1 className="text-3xl font-black break-words">{state.title}</h1>
-      <p className="mt-2 text-sm text-[var(--muted)]">Local game · One manager · No expiry</p>
     </div>
     <div className="grid sm:grid-cols-3 gap-3 mb-8">
       {[['Total buy-ins', ledger.collected], ['Cashed out', ledger.paid], ['Bank available', ledger.available]].map(([label, amount]) => <div key={label} className={`rounded-xl border-2 border-[var(--border)] p-4 ${label === 'Bank available' ? 'bg-[var(--cream)]' : 'bg-white'}`}><p className="text-xs font-bold uppercase tracking-widest text-[var(--muted)]">{label}</p><p className="mt-3 text-2xl font-mono text-[var(--accent)] tabular-nums break-words">{money(Number(amount))}</p></div>)}

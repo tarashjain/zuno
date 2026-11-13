@@ -9,7 +9,7 @@ export default function CashierSetup() {
   const router = useRouter()
   const lock = useRef(false)
   const [title, setTitle] = useState('')
-  const [unit, setUnit] = useState('')
+  const [unit, setUnit] = useState('chips')
   const [amount, setAmount] = useState('')
   const [names, setNames] = useState(['', '', '', ''])
   const [busy, setBusy] = useState(false)
