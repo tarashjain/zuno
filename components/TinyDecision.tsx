@@ -1,10 +1,22 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import styles from './TinyDecision.module.css'
 
 type Option = { id: number; label: string; probability: string }
 const COLORS = ['#e8430a', '#62745c', '#b38a51', '#77738e', '#b66c70', '#507f89']
+const VERDICTS = [
+  'Fate has spoken. No take-backs.',
+  'The universe said this. Take it up with the universe.',
+  'Your overthinking subscription has expired.',
+  'The dice have spoken. They have no qualifications.',
+  'A committee of absolutely nobody approved this.',
+  'Destiny called. It refused to elaborate.',
+  'The plot has chosen its next twist.',
+  'Your future self can file a complaint later.',
+  'Decision made. Group chat crisis averted.',
+  'The cosmic coin landed on “stop asking.”',
+]
 const format = (value: number) => Number(value.toFixed(2)).toString()
 
 export default function TinyDecision() {
@@ -14,7 +26,14 @@ export default function TinyDecision() {
     { id: 2, label: '', probability: '50' },
   ])
   const [custom, setCustom] = useState(false)
-  const [result, setResult] = useState<{ label: string; probability: number; count: number } | null>(null)
+  const [result, setResult] = useState<{ label: string; probability: number; count: number; verdict: string } | null>(null)
+  const [isPicking, setIsPicking] = useState(false)
+  const pickingRef = useRef(false)
+  const revealTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
+
+  useEffect(() => () => {
+    if (revealTimer.current !== null) clearTimeout(revealTimer.current)
+  }, [])
   const probabilities = options.map(option => custom ? Number(option.probability) : 100 / options.length)
   const total = probabilities.reduce((sum, value) => sum + value, 0)
   const validProbabilities = options.every((option, index) =>
@@ -55,15 +74,33 @@ export default function TinyDecision() {
   }
 
   function pick() {
-    if (!ready) return
-    const random = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967296 * total
+    if (!ready || pickingRef.current) return
+    const draws = crypto.getRandomValues(new Uint32Array(2))
+    const random = draws[0] / 4294967296 * total
     let cumulative = 0
     const index = probabilities.findIndex(probability => {
       cumulative += probability
       return random < cumulative
     })
     if (index < 0) return
-    setResult(previous => ({ label: options[index].label.trim(), probability: probabilities[index], count: (previous?.count ?? 0) + 1 }))
+    const choice = {
+      label: options[index].label.trim(),
+      probability: probabilities[index],
+      verdict: VERDICTS[Math.floor(draws[1] / 4294967296 * VERDICTS.length)],
+    }
+    const reveal = () => {
+      setResult(previous => ({ ...choice, count: (previous?.count ?? 0) + 1 }))
+      pickingRef.current = false
+      revealTimer.current = null
+      setIsPicking(false)
+    }
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      reveal()
+      return
+    }
+    pickingRef.current = true
+    setIsPicking(true)
+    revealTimer.current = setTimeout(reveal, 1100)
   }
 
   return (
@@ -75,7 +112,7 @@ export default function TinyDecision() {
       </header>
 
       <div className="grid lg:grid-cols-[1.15fr_1fr] gap-6 items-start">
-        <section aria-labelledby="options-title" className="bg-[var(--surface)] border border-[var(--border)] rounded-3xl p-5 sm:p-8 shadow-sm">
+        <fieldset disabled={isPicking} aria-labelledby="options-title" className="min-w-0 bg-[var(--surface)] border border-[var(--border)] rounded-3xl p-5 sm:p-8 shadow-sm disabled:cursor-wait">
           <div className="flex items-center justify-between gap-3 mb-6">
             <h2 id="options-title" className="text-xl font-bold">What are the options?</h2>
             <span className="text-xs text-[var(--muted)] tabular-nums">{options.length} / 12</span>
@@ -123,16 +160,27 @@ export default function TinyDecision() {
               {probabilityError}
             </p>
           )}
-        </section>
+        </fieldset>
 
         <section aria-label="Random picker" className="lg:sticky lg:top-24 bg-[var(--surface2)] border border-[var(--border)] rounded-3xl p-6 sm:p-10 text-center overflow-hidden">
           <p className="text-xs uppercase tracking-[0.25em] font-bold text-[var(--muted)]">Leave a little to chance</p>
-          <div key={result?.count ?? 0} className={`my-8 mx-auto w-20 h-20 rounded-3xl bg-[var(--paper)] border border-[var(--border)] flex items-center justify-center text-[var(--accent)] rotate-12 shadow-sm ${result ? styles.diceRoll : ''}`} aria-hidden="true">
-            <svg viewBox="0 0 48 48" fill="currentColor" className="w-11 h-11"><circle cx="12" cy="12" r="3" /><circle cx="36" cy="12" r="3" /><circle cx="24" cy="24" r="3" /><circle cx="12" cy="36" r="3" /><circle cx="36" cy="36" r="3" /></svg>
+          <div className={styles.diceStage} aria-hidden="true">
+            {isPicking && <div className={styles.orbit} />}
+            {!isPicking && result && <div key={result.count} className={styles.celebration}>
+              {Array.from({ length: 8 }, (_, index) => <span key={index} style={{ transform: `rotate(${index * 45}deg)` }}><i /></span>)}
+            </div>}
+            <div className={`${styles.diceShadow} ${isPicking ? styles.shadowRolling : ''}`} />
+            <div key={isPicking ? 'rolling' : result?.count ?? 'idle'} className={`${styles.die} ${isPicking ? styles.diceRoll : result ? styles.diceLand : ''}`}>
+              <svg viewBox="0 0 48 48" fill="currentColor" className="w-11 h-11"><circle cx="12" cy="12" r="3" /><circle cx="36" cy="12" r="3" /><circle cx="24" cy="24" r="3" /><circle cx="12" cy="36" r="3" /><circle cx="36" cy="36" r="3" /></svg>
+            </div>
           </div>
           <div className="min-h-36 flex flex-col justify-center" aria-live="polite" aria-atomic="true">
-            {result ? <div key={result.count} className={styles.resultReveal}>
-              <p className="text-xs font-bold uppercase tracking-widest text-[var(--accent)] mb-3">Fate has spoken. No take-backs.</p>
+            {isPicking ? <div>
+              <p className="text-xs font-bold uppercase tracking-widest text-[var(--accent)] mb-3">Consulting the universe…</p>
+              <h2 className="text-3xl font-bold tracking-tight">One tiny moment.</h2>
+              <div className={styles.progress} aria-hidden="true"><span /></div>
+            </div> : result ? <div key={result.count} className={styles.resultReveal}>
+              <p className="text-xs font-bold uppercase tracking-widest text-[var(--accent)] mb-3">{result.verdict}</p>
               <h2 className="text-4xl sm:text-5xl font-extrabold tracking-tight break-words">{result.label}</h2>
               <p className="text-sm text-[var(--muted)] mt-4">{format(result.probability)}% chance. One less thing to think about.</p>
             </div> : <>
@@ -140,8 +188,8 @@ export default function TinyDecision() {
               <p className="mt-3 text-sm text-[var(--muted)]">Your next move is waiting to be picked.</p>
             </>}
           </div>
-          <button type="button" onClick={pick} disabled={!ready} className="mt-8 w-full rounded-2xl bg-[var(--accent)] text-white font-bold py-4 hover:brightness-110 transition-all active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed">
-            {result ? 'Pick again' : 'Make my decision'} <span aria-hidden="true">↗</span>
+          <button type="button" onClick={pick} disabled={!ready || isPicking} className="mt-8 w-full rounded-2xl bg-[var(--accent)] text-white font-bold py-4 hover:brightness-110 transition-all motion-reduce:transition-none active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed">
+            {isPicking ? 'Let fate cook…' : result ? 'Pick again' : 'Make my decision'} {!isPicking && <span aria-hidden="true">↗</span>}
           </button>
           <p className="mt-4 text-xs text-[var(--muted)]">{!named ? 'Give every option a name to get started.' : !validTotal ? 'Adjust your chances to total 100%.' : 'A fresh, independent pick every time.'}</p>
         </section>
