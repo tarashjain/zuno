@@ -8,15 +8,15 @@ import { createCashierState, formatAmount, parseAmount } from '@/lib/cashier'
 export default function CashierSetup() {
   const router = useRouter()
   const lock = useRef(false)
-  const [title, setTitle] = useState('Poker night')
-  const [unit, setUnit] = useState('chips')
-  const [amount, setAmount] = useState('100')
-  const [names, setNames] = useState(['Player 1', 'Player 2', 'Player 3', 'Player 4'])
+  const [title, setTitle] = useState('')
+  const [unit, setUnit] = useState('')
+  const [amount, setAmount] = useState('')
+  const [names, setNames] = useState(['', '', '', ''])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   let total = '—'
   try { total = formatAmount(parseAmount(amount) * names.length) } catch {}
-  const input = 'w-full rounded-xl border border-[var(--border)] bg-[var(--paper)] px-3 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--accent)]'
+  const input = 'w-full rounded-xl border border-[var(--border)] bg-[var(--paper)] px-3 py-3 text-sm placeholder:text-gray-400 placeholder:font-normal placeholder:opacity-100 focus:outline-none focus:ring-2 focus:ring-[var(--accent)]'
 
   async function start(event: React.FormEvent) {
     event.preventDefault()
@@ -39,15 +39,15 @@ export default function CashierSetup() {
     <fieldset disabled={busy} className="min-w-0">
       <h2 className="text-2xl font-bold mb-6">Open a table</h2>
       <div className="grid sm:grid-cols-2 gap-4">
-        <label className="text-sm font-semibold">Table name<input className={`${input} mt-2`} value={title} maxLength={60} onChange={e => setTitle(e.target.value)} required /></label>
+        <label className="text-sm font-semibold">Table name<input className={`${input} mt-2`} value={title} maxLength={60} onChange={e => setTitle(e.target.value)} placeholder="e.g. Poker night" required /></label>
         <label className="text-sm font-semibold">Unit or currency label<input className={`${input} mt-2`} value={unit} maxLength={8} onChange={e => setUnit(e.target.value)} placeholder="chips, $, ₹…" required /></label>
-        <label className="text-sm font-semibold">Starting buy-in per player<input className={`${input} mt-2`} inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} required /></label>
-        <label className="text-sm font-semibold">Number of players<select className={`${input} mt-2`} value={names.length} onChange={e => setNames(current => Array.from({ length: Number(e.target.value) }, (_, i) => current[i] ?? `Player ${i + 1}`))}>
+        <label className="text-sm font-semibold">Starting buy-in per player<input className={`${input} mt-2`} inputMode="decimal" value={amount} onChange={e => setAmount(e.target.value)} placeholder="e.g. 1000" required /></label>
+        <label className="text-sm font-semibold">Number of players<select className={`${input} mt-2`} value={names.length} onChange={e => setNames(current => Array.from({ length: Number(e.target.value) }, (_, i) => current[i] ?? ''))}>
           {Array.from({ length: 20 }, (_, i) => <option key={i + 1} value={i + 1}>{i + 1}</option>)}
         </select></label>
       </div>
       <div className="mt-6 grid sm:grid-cols-2 gap-3">
-        {names.map((name, index) => <label key={index} className="text-xs font-semibold text-[var(--muted)]">Player {index + 1}<input className={`${input} mt-1 text-[var(--text)]`} value={name} maxLength={40} onChange={e => setNames(current => current.map((value, i) => i === index ? e.target.value : value))} required /></label>)}
+        {names.map((name, index) => <label key={index} className="text-xs font-semibold text-[var(--muted)]">Player {index + 1}<input className={`${input} mt-1 text-[var(--text)]`} value={name} maxLength={40} onChange={e => setNames(current => current.map((value, i) => i === index ? e.target.value : value))} placeholder={`e.g. ${['Alex', 'Sam', 'Jordan', 'Taylor'][index % 4]}`} required /></label>)}
       </div>
       <div className="mt-6 flex items-center justify-between gap-3 rounded-2xl bg-[var(--surface2)] p-4">
         <span className="text-sm font-semibold">Total starting buy-in</span><strong className="text-xl tabular-nums">{total} <span className="text-xs font-normal">{unit}</span></strong>
