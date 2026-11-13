@@ -110,14 +110,6 @@ export default function Navbar() {
 
         {/* Desktop category nav */}
         <div className="hidden 2xl:flex items-center gap-1 flex-1">
-          <Link
-            href="/tiny-decision"
-            onClick={() => setOpenCat(null)}
-            aria-current={pathname === '/tiny-decision' ? 'page' : undefined}
-            className={`px-3 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors ${pathname === '/tiny-decision' ? 'bg-[var(--surface2)] text-[var(--accent)]' : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface2)]'}`}
-          >
-            Tiny Decision
-          </Link>
           {CATEGORIES.map((cat) => (
             <div key={cat.label} className="relative">
               <button
@@ -151,6 +143,14 @@ export default function Navbar() {
               <span>Score Keeper</span>
             </Link>
           </div>
+          <Link
+            href="/tiny-decision"
+            onClick={() => setOpenCat(null)}
+            aria-current={pathname === '/tiny-decision' ? 'page' : undefined}
+            className={`px-3 py-2 rounded-lg text-sm font-semibold whitespace-nowrap transition-colors ${pathname === '/tiny-decision' ? 'bg-[var(--surface2)] text-[var(--accent)]' : 'text-[var(--muted)] hover:text-[var(--text)] hover:bg-[var(--surface2)]'}`}
+          >
+            Tiny Decision
+          </Link>
         </div>
 
         {/* Desktop right side */}
@@ -245,14 +245,6 @@ export default function Navbar() {
           ${mobileOpen ? 'translate-x-0' : 'translate-x-full'}`}
       >
         <div className="p-4 space-y-1">
-          <Link
-            href="/tiny-decision"
-            onClick={() => setMobileOpen(false)}
-            aria-current={pathname === '/tiny-decision' ? 'page' : undefined}
-            className={`block px-3 py-3 rounded-xl font-semibold transition-colors ${pathname === '/tiny-decision' ? 'bg-[var(--surface2)] text-[var(--accent)]' : 'hover:bg-[var(--surface2)]'}`}
-          >
-            Tiny Decision
-          </Link>
           {/* Game categories */}
           {CATEGORIES.map((cat) => (
             <div key={cat.label}>
@@ -297,6 +289,15 @@ export default function Navbar() {
               📝 Score Keeper
             </Link>
           </div>
+
+          <Link
+            href="/tiny-decision"
+            onClick={() => setMobileOpen(false)}
+            aria-current={pathname === '/tiny-decision' ? 'page' : undefined}
+            className={`block px-3 py-3 rounded-xl font-semibold transition-colors ${pathname === '/tiny-decision' ? 'bg-[var(--surface2)] text-[var(--accent)]' : 'hover:bg-[var(--surface2)]'}`}
+          >
+            Tiny Decision
+          </Link>
 
           <div className="border-t border-[var(--border)] my-3" />
 
